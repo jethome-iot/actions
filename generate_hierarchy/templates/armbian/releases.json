@@ -1,0 +1,44 @@
+{
+    "jammy": {
+        "final": false,
+        "subtypes": [],
+        "is_active": true,
+        "slug": "jammy",
+        "name": "Ubuntu 22.04 Jammy"
+    },
+    "sid": {
+        "final": false,
+        "subtypes": [],
+        "is_active": true,
+        "slug": "sid",
+        "name": "Debian Sid"
+    },
+    "bullseye": {
+        "final": false,
+        "subtypes": [],
+        "is_active": true,
+        "slug": "bullseye",
+        "name": "Debian 11 Bullseye"
+    },
+    "focal": {
+        "final": false,
+        "subtypes": [],
+        "is_active": true,
+        "slug": "focal",
+        "name": "Ubuntu 20.04 Focal"
+    },
+    "kinetic": {
+        "final": false,
+        "subtypes": [],
+        "is_active": true,
+        "slug": "kinetic",
+        "name": "Ubuntu 22.10 Kinetic Kudu"
+    },
+    "lunar": {
+        "final": false,
+        "subtypes": [],
+        "is_active": true,
+        "slug": "lunar",
+        "name": "Ubuntu 23.04 Lunar Lobster"
+    }
+}

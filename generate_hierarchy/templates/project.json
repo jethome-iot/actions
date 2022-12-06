@@ -1,0 +1,25 @@
+{
+    "BurnTools": {
+        "slug": "BurnTools",
+        "name": "Burning Tool",
+        "final": true,
+        "is_active": true,
+        "storage_policy": "Release (keep last 4)"
+    },
+    "Armbian": {
+        "slug": "armbian",
+        "name": "Armbian",
+        "final": false,
+        "is_active": true,
+        "subtypes": []
+    },
+    "JHAOS": {
+        "slug": "jhaos",
+        "name": "JetHome Home Assistant OS",
+        "final": false,
+        "is_active": true,
+        "subtypes": []
+    }
+}
+
+

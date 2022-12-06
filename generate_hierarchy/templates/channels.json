@@ -1,0 +1,34 @@
+{
+    "release": {
+        "name": "Release",
+        "storage_policy": "Release (keep last 4)",
+        "is_active": true,
+        "slug": "release",
+        "subtypes": [],
+        "final": false
+    },
+    "nightly": {
+        "name": "Nightly",
+        "storage_policy": "Nightly (keep last 30)",
+        "is_active": true,
+        "slug": "nightly",
+        "subtypes": [],
+        "final": false
+    },
+    "rc": {
+        "name": "Release Candidate",
+        "storage_policy": "Release (keep last 4)",
+        "is_active": true,
+        "slug": "rc",
+        "subtypes": [],
+        "final": false
+    },
+    "beta": {
+        "name": "Beta Release",
+        "storage_policy": "Release (keep last 4)",
+        "is_active": true,
+        "slug": "beta",
+        "subtypes": [],
+        "final": false
+    }
+}

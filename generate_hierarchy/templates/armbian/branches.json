@@ -1,0 +1,14 @@
+{
+    "current": {
+        "final": true,
+        "is_active": true,
+        "slug": "current",
+        "name": "Stable Kernel"
+    },
+    "edge": {
+        "final": true,
+        "is_active": true,
+        "slug": "edge",
+        "name": "Edge Kernel"
+    }
+}
