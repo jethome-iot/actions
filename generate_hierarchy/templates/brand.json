@@ -1,6 +1,8 @@
 {
-    "platforms": [],
-    "is_active": true,
-    "slug": "jethome",
-    "name": "JetHome"
+    "JetHome" : {
+        "platforms": [],
+        "is_active": true,
+        "slug": "jethome",
+        "name": "JetHome"
+    }
 }
