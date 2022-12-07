@@ -11,10 +11,10 @@ TEMPLATE_PATH = os.path.join(__location__, 'templates')
 def print_help(name):
     # Use a breakpoint in the code line below to debug your script.
     print(''' generate_hierarchy Gerenate json for firmware storage
-    python generate_hierarchy brand os platform channel
+    python generate_hierarchy brand platform os channel ...
         brand - JetHome
-        os - Armbian, JHAOS etc
         platform - jethub-j100, jethub-j80
+        os - Armbian, JHAOS etc
         ''''generate_hierarchy help:\n\tpython generate_hierachy arg')  # Press Ctrl+F8 to toggle the breakpoint.
 
 
@@ -48,17 +48,12 @@ def generate_burntools():
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     '''
-    IMAGENAMEBURN="Armbian_${VERSION}_${BOARD^}_${RELEASE}_${BRANCH}_${LINUXVER}.burn.img.xz"
-    Armbian_22.05.0-trunk.0066.jethome.0_Jethubj100_bullseye_edge_5.17.5.img.xz
-    '''
-
-    '''
-    fwjson.py os platform channel release branch version
+    fwjson.py platform os channel release branch version
     '''
     if len(sys.argv) - 1 > 3:
         brandA = sys.argv[1]
-        projectos = sys.argv[2]
-        platform = sys.argv[3]
+        platform = sys.argv[2]
+        projectos = sys.argv[3]
         channel = sys.argv[4]
     else:
         print_help(sys.argv[0])

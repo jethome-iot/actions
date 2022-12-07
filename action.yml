@@ -1,0 +1,171 @@
+name: 'Upload firmware'
+description: 'Upload firmware to JetHome firmware repository'
+inputs:
+  fullslug:
+    description: 'Full slug of the firmware. Format: <vendor>.<model>.<os>.<branch>.<distro>.<arch>'
+    required: true
+  url:
+    required: false
+    description: 'URL of the firmware site. If not specified, use jethome dev env.'
+    default: 'http://test.fw.jethome.ru'
+  date:
+    required: false
+    description: 'Date of the firmware. If not specified, it will be the current date. Format: 2022-12-07T15:54:34+03:00'
+  version:
+    required: false
+    description: 'Version of the firmware. If not specified, it will be the current date. Format: 2022-12-07T15:54:34+03:00'
+  image_type:
+    required: true
+    description: 'Type of the firmware'
+  hashpgp_file:
+    required: false
+    description: 'PGP/hash of the firmware. If not specified, it will be calculated automatically in sha256 format.'
+  firmware_file:
+    required: true
+    description: 'Firmware file.'
+  force_overwrite:
+    required: false
+    description: 'Overwrite the firmware. If not specified, it will be true.'
+    default: 'true'
+  update_latest:
+    required: false
+    description: 'Update latest flag. If not specified, it will be false.'
+    default: 'false'
+  supported_devices:
+    required: false
+    description: 'Supported devices. If not specified, it will be empty.'
+  FWUPLOAD:
+    required: true
+    description: 'Token for uploading firmware'
+
+outputs:
+  firmware_hash:
+    description: "firmware hash"
+    value: ${{ steps.deploy-to-fw-storage.outputs.hash }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check data & version
+      id: checkvars
+      shell: bash
+      run: |
+        # Check date & version specified
+        # Check date specified or use current date
+        if [ -z ${{inputs.date}} ] ; then
+          DATE="$(date -Iseconds)"
+        else
+          DATE="${{inputs.date}}"
+        fi
+        # Check version specified or use date as version
+        if [ -z ${{inputs.version}} ] ; then
+          VERSION="${DATE}"
+        else
+          VERSION="${{inputs.version}}"
+        fi
+
+        #          vendor.platform.project.channel.release.branch
+        #default: 'JetHome.j100.Armbian.nightly.jammy.edge'
+        read VENDOR SLUGWOVENDOR   <<<"$(echo ${{inputs.fullslug}} | sed 's/\./ /')"
+        read PLATFORM SLUG <<<"$(echo ${SLUGWOVENDOR} | sed 's/\./ /')"
+        echo "vendor=${VENDOR}" >> $GITHUB_OUTPUT
+        echo "platform=${PLATFORM}" >> $GITHUB_OUTPUT
+        echo "slug=${SLUG}" >> $GITHUB_OUTPUT
+
+        echo "date=${DATE}" >> $GITHUB_OUTPUT
+        echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+    - name: Apply fw template
+      id: apply-fw-template
+      shell: bash
+      run: |
+        # Apply fw template
+        TMPJSON=$(mktemp)
+        cd "${{ github.action_path }}/generate_hierarchy"
+        ARGS=$(echo ${{inputs.fullslug}}| sed 's/\./ /g')
+        HIERARCHY=$(python3 main.py ${ARGS})
+
+        echo ${HIERARCHY} > ${TMPJSON}
+        echo Add category to fw
+        RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
+            -F "import_file=@${TMPJSON}" \
+            -F 'commit="true"' \
+            "${{inputs.url}}/api/import_hierarchy/")
+        rm -rf ${TMPJSON}
+        if [ "$(echo ${RESPONSE} | jq .success)" == "true" ]; then
+          echo "Category add to storage: Success"
+        else
+          echo "Category add to storage: Error"
+          echo ${RESPONSE}
+          exit 1
+        fi
+
+    - name: Create firmware slot
+      id: add-fw-slot
+      shell: bash
+      run: |
+        echo "Create firmware slot ${{steps.checkvars.outputs.vendor}}.${{steps.checkvars.outputs.platform}}.${{steps.checkvars.outputs.slug}}"
+        if [ -z ${{inputs.supported_devices}} ] ; then
+          SUPPORTED_DEVICES=""
+        else
+          SUPPORTED_DEVICES="-F supported_devices=\"${{inputs.supported_devices}}\" "
+        fi
+
+        RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
+            -F 'vendor="'${{steps.checkvars.outputs.vendor}}'"' \
+            -F 'platform="'${{steps.checkvars.outputs.platform}}'"' \
+            -F 'firmware_type="'${{steps.checkvars.outputs.slug}}'"' \
+            -F 'version="'${{steps.checkvars.outputs.version}}'"' \
+            -F 'release_date="'${{steps.checkvars.outputs.date}}'"' \
+            -F "update_latest_ref=${{inputs.update_latest}}" \
+            -F "force_overwrite=${{inputs.force_overwrite}}" \
+            ${SUPPORTED_DEVICES} \
+            "${{inputs.url}}/api/create_firmware/")
+        echo -n "Create firmware slot: "
+        if [ $(echo ${RESPONSE} | jq .success) == "true" ]; then
+          echo "Success"
+        else
+          echo "Error"
+          echo ${RESPONSE}
+        fi
+
+    - name: Deploy to fw storage
+      id: deploy-to-fw-storage
+      shell: bash
+      run: |
+        # Deploy to fw storage
+        #          vendor.platform.project.channel.release.branch
+        #default: 'JetHome.j100.Armbian.nightly.jammy.edge'
+        if [ ! -e "${{inputs.hashpgp_file}}" ] ; then
+          HASHPGP=$(sha256sum ${{inputs.firmware_file}} | awk '{print $1}')
+          echo "Generate sha256 hash ${HASHPGP}"
+        else
+          HASHPGP="$(cat ${{inputs.hashpgp_file}})"
+          echo "Use provided hash ${HASHPGP}"
+        fi
+        TMPHASH=$(mktemp)
+        echo "${HASHPGP}" >${TMPHASH}
+        echo Upload firmware_type=${{inputs.fullslug}}
+        RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
+            -F 'vendor="'${{steps.checkvars.outputs.vendor}}'"' \
+            -F 'platform="'${{steps.checkvars.outputs.platform}}'"' \
+            -F 'firmware_type="'${{steps.checkvars.outputs.slug}}'"' \
+            -F 'version="'${{steps.checkvars.outputs.version}}'"' \
+            -F 'image_type="'${{inputs.image_type}}'"' \
+            -F "hash_pgp=@${TMPHASH}" \
+            -F "firmware_file=@${{inputs.firmware_file}}" \
+            -F 'force_overwrite="'${{inputs.force_overwrite}}'"' \
+            "${{inputs.url}}/api/upload_firmware/")
+
+        rm -rf ${TMPHASH}
+        echo -n "Upload firmware ${{inputs.firmware_file}}: "
+        if [ $(echo ${RESPONSE} | jq .success) == "true" ]; then
+          echo "Success"
+        else
+          echo "Error"
+          echo ${RESPONSE}
+          exit 5
+        fi
+        echo 'hash<<EOF' >> $GITHUB_OUTPUT
+        echo "${HASHPGP}" >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
