@@ -23,6 +23,10 @@ inputs:
   firmware_file:
     required: true
     description: 'Firmware file.'
+  generatefirmwareslot:
+    required: false
+    description: 'Generate firmware slot. If not specified, it will be false.'
+    default: 'false'
   force_overwrite:
     required: false
     description: 'Overwrite the firmware. If not specified, it will be true.'
@@ -110,23 +114,24 @@ runs:
         else
           SUPPORTED_DEVICES="-F supported_devices=\"${{inputs.supported_devices}}\" "
         fi
-
-        RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
-            -F 'vendor="'${{steps.checkvars.outputs.vendor}}'"' \
-            -F 'platform="'${{steps.checkvars.outputs.platform}}'"' \
-            -F 'firmware_type="'${{steps.checkvars.outputs.slug}}'"' \
-            -F 'version="'${{steps.checkvars.outputs.version}}'"' \
-            -F 'release_date="'${{steps.checkvars.outputs.date}}'"' \
-            -F "update_latest_ref=${{inputs.update_latest}}" \
-            -F "force_overwrite=${{inputs.force_overwrite}}" \
-            ${SUPPORTED_DEVICES} \
-            "${{inputs.url}}/api/create_firmware/")
-        echo -n "Create firmware slot: "
-        if [ $(echo ${RESPONSE} | jq .success) == "true" ]; then
-          echo "Success"
-        else
-          echo "Error"
-          echo ${RESPONSE}
+        if [ "${{inputs.generatefirmwareslot}}" == "true" ]; then  
+          RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
+              -F 'vendor="'${{steps.checkvars.outputs.vendor}}'"' \
+              -F 'platform="'${{steps.checkvars.outputs.platform}}'"' \
+              -F 'firmware_type="'${{steps.checkvars.outputs.slug}}'"' \
+              -F 'version="'${{steps.checkvars.outputs.version}}'"' \
+              -F 'release_date="'${{steps.checkvars.outputs.date}}'"' \
+              -F "update_latest_ref=${{inputs.update_latest}}" \
+              -F "force_overwrite=true" \
+              ${SUPPORTED_DEVICES} \
+              "${{inputs.url}}/api/create_firmware/")
+          echo -n "Create firmware slot: "
+          if [ $(echo ${RESPONSE} | jq .success) == "true" ]; then
+            echo "Success"
+          else
+            echo "Error"
+            echo ${RESPONSE}
+          fi
         fi
 
     - name: Deploy to fw storage
