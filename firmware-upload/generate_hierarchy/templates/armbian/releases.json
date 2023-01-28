@@ -20,6 +20,13 @@
         "slug": "bullseye",
         "name": "Debian 11 Bullseye"
     },
+    "bookworm": {
+        "final": false,
+        "subtypes": [],
+        "is_active": true,
+        "slug": "bookworm",
+        "name": "Debian 12 Bookworm"
+    },
     "focal": {
         "final": false,
         "subtypes": [],
