@@ -10,5 +10,23 @@
         "is_active": true,
         "slug": "j100",
         "name": "J100"
+    },
+    "ws7": {
+        "firmware_types": [],
+        "is_active": true,
+        "slug": "ws7",
+        "name": "WS7"
+    },
+    "z2": {
+        "firmware_types": [],
+        "is_active": true,
+        "slug": "z2",
+        "name": "Z2"
+    },
+    "z4": {
+        "firmware_types": [],
+        "is_active": true,
+        "slug": "z4",
+        "name": "Z4"
     }
 }

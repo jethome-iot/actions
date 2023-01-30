@@ -19,7 +19,12 @@
         "final": false,
         "is_active": true,
         "subtypes": []
+    },
+    "Firmware": {
+        "slug": "firmware",
+        "name": "Firmware",
+        "final": false,
+        "is_active": true,
+        "subtypes": []
     }
 }
-
-

@@ -44,6 +44,17 @@ def generate_jhaos():
 def generate_burntools():
     pass
 
+def generate_firmware():
+    fwtype = sys.argv[5]
+    with open(os.path.join(TEMPLATE_PATH, 'firmware/type.json')) as json_file:
+        fwtypes = json.load(json_file)
+
+    # print (i, platform)
+    # fw types tree
+    fwtyperelease = fwtypes[fwtype]  # focal,jammy,bulseye
+
+    return fwtyperelease
+
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
@@ -51,6 +62,13 @@ if __name__ == '__main__':
     fwjson.py platform os channel release branch version
     '''
     if len(sys.argv) - 1 > 3:
+        '''
+        Read first 4 args (common for all):
+        brand - JetHome
+        platform - j100, j80, z2
+        project - Armbian, JHAOS, Firmware etc
+        channel - release, rc, nightly, branch-name
+        '''
         brandA = sys.argv[1]
         platform = sys.argv[2]
         projectos = sys.argv[3]
@@ -76,7 +94,10 @@ if __name__ == '__main__':
         exit(255)
 
     if projectos in projects.keys():
-        func = getattr(sys.modules[__name__], 'generate_' + projectos.lower())
+        '''
+        Select "project"
+        '''
+        func = getattr(sys.modules[__name__], 'generate_' + projects[projectos]['slug'].lower())
         fwtyperelease = func()
 
         fwtype = projects[projectos]

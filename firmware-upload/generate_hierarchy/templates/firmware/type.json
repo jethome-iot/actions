@@ -1,0 +1,26 @@
+{
+  "coordinator": {
+      "final": true,
+      "is_active": true,
+      "slug": "coordinator",
+      "name": "Coordinator firmware"
+  },
+  "router": {
+      "final": true,
+      "is_active": true,
+      "slug": "router",
+      "name": "Router firmware"
+  },
+  "device": {
+      "final": true,
+      "is_active": true,
+      "slug": "device",
+      "name": "Device firmware"
+  },
+  "bootloader": {
+      "final": true,
+      "is_active": true,
+      "slug": "bootloader",
+      "name": "Bootloader firmware"
+  }
+}
