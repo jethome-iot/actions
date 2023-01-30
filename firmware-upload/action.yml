@@ -86,7 +86,7 @@ runs:
         # Apply fw template
         TMPJSON=$(mktemp)
         cd "${{ github.action_path }}/generate_hierarchy"
-        ARGS=$(echo ${{inputs.fullslug}}| sed 's/\./ /g')
+        ARGS=$(echo ${{inputs.fullslug}}| sed 's/\./ /g'| sed 's/\//-/g')
         HIERARCHY=$(python3 main.py ${ARGS})
 
         echo ${HIERARCHY} > ${TMPJSON}
