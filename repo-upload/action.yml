@@ -1,0 +1,45 @@
+name: 'Upload repo packages'
+description: 'Upload Ubuntu/Debian packages to JetHome repository'
+inputs:
+  hostname:
+    required: false
+    description: 'hostname of the repo site'
+    default: 'repo.jethome.ru'
+  repositories:
+    required: true
+    description: 'repositories to add packages'
+  beta:
+    required: true
+    description: 'push to beta repository'
+    default: true
+  ssh_key:
+    required: true
+  ssh_knownhosts:
+    required: true
+
+outputs:
+  status:
+    description: "result repo push"
+    value: ${{ steps.deploy-to-repo-storage.outputs.output }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Generate key id" # We need this in case we run multiple runners on one machine
+      shell: bash
+      run: echo "RANDOM=ID_$((RANDOM%1000000))" >> $GITHUB_ENV
+
+    - name: Install SSH key for storage
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ inputs.ssh_key }}
+        name: ${{ env.RANDOM }}
+        known_hosts: ${{ inputs.ssh_knownhosts }}
+        if_key_exists: replace
+
+    - name: Deploy to repo storage
+      id: deploy-to-repo-storage
+      shell: bash
+      run: |
+        echo 'output=ok' >> $GITHUB_OUTPUT
+        exit 0
