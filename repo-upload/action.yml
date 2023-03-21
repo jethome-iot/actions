@@ -5,13 +5,23 @@ inputs:
     required: false
     description: 'hostname of the repo site'
     default: 'repo.jethome.ru'
-  repositories:
+  hostpath:
+    required: true
+    description: 'path to the repo'
+    default: '/home/repo/armbian'
+  distro:
     required: true
     description: 'repositories to add packages'
-  beta:
+  branch:
     required: true
-    description: 'push to beta repository'
-    default: true
+    description: 'release type (stable, nightly, test)'
+    default: 'test'
+  path:
+    required: true
+    description: 'path to the packages'
+  files:
+    required: true
+    description: 'list of packages to upload'
   ssh_key:
     required: true
   ssh_knownhosts:
@@ -41,5 +51,17 @@ runs:
       id: deploy-to-repo-storage
       shell: bash
       run: |
+        if [ "${{ inputs.branch }}" == "stable" ]; then
+          DEPLOYFOLDER=${{ inputs.path }}
+        elif [ "${{ inputs.branch }}" == "nightly" ]; then
+          DEPLOYFOLDER=${{ inputs.path }}-beta
+        else
+          echo 'output=not_need' >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        for file in ${{ inputs.files }}; do
+          rsync -avr ${{ inputs.path }}/${file} repo@${{ inputs.hostname }}:${DEPLOYFOLDER}
+        done
+        
         echo 'output=ok' >> $GITHUB_OUTPUT
         exit 0
