@@ -60,8 +60,12 @@ runs:
           echo 'output=not_need' >> $GITHUB_OUTPUT
           exit 0
         fi
-        for file in ${{ inputs.files }}; do
-          rsync -avr ${{ inputs.path }}/${file} repo@${{ inputs.hostname }}:${DEPLOYFOLDER}
+        for dist in $(echo ${{ inputs.distro }} | sed 's/,/ /g'); do
+          ssh repo@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
+          for file in ${{ inputs.files }}; do
+            echo rsync -avr ${{ inputs.path }}/${file} repo@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
+            rsync -avr ${{ inputs.path }}/${file} repo@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
+          done
         done
         
         echo 'output=ok' >> $GITHUB_OUTPUT
