@@ -23,6 +23,12 @@ inputs:
   files:
     required: true
     description: 'list of packages to upload'
+  SSH_KEY:
+    required: true
+    description: 'SSH key for repo storage'
+  SSH_KNOWNHOSTS_UPLOAD:
+    required: true
+    description: 'SSH known hosts for repo storage'
 
 outputs:
   status:
@@ -32,6 +38,25 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: "Generate key id" # We need this in case we run multiple runners on one machine
+      shell: bash
+      run: |
+        echo "RANDOM=ID_$((RANDOM%1000000))" >> $GITHUB_ENV
+        echo "HOME=${HOME}" >> $GITHUB_ENV
+
+    - name: Install SSH key for storage
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ inputs.SSH_KEY }}
+        name: ${{ env.RANDOM }}
+        known_hosts: ${{ inputs.SSH_KNOWNHOSTS_UPLOAD }}
+        if_key_exists: replace
+        config: |
+          Host bastion
+            HostName repo.jethome.ru
+            User repo
+            IdentityFile ${HOME}/.ssh/${{ env.RANDOM }}
+
     - name: Deploy to repo storage
       id: deploy-to-repo-storage
       shell: bash
@@ -45,12 +70,13 @@ runs:
           exit 0
         fi
         for dist in $(echo ${{ inputs.distro }} | sed 's/,/ /g'); do
-          ssh repo@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
+          ssh -i ${HOME}/.ssh/${{ env.RANDOM }} repo@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
+          # hack to collect distribution keys
+          ssh -i ${HOME}/.ssh/${{ env.RANDOM }} repo@${{ inputs.hostname }} "flock /home/repo/distro echo ${dist} >> /home/repo/distro"
           for file in $(echo "${{ inputs.files }}" | tr '\n' ' '); do
-            echo rsync -avr ${{ inputs.path }}/${file} repo@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
-            rsync -avr ${{ inputs.path }}/${file} repo@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
+            rsync -e "ssh -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr ${{ inputs.path }}/${file} repo@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
           done
         done
-        
+
         echo 'output=ok' >> $GITHUB_OUTPUT
         exit 0
