@@ -19,6 +19,7 @@ inputs:
   path:
     required: true
     description: 'path to the packages'
+    default: '.'
   files:
     required: true
     description: 'list of packages to upload'
@@ -52,9 +53,9 @@ runs:
       shell: bash
       run: |
         if [ "${{ inputs.branch }}" == "stable" ]; then
-          DEPLOYFOLDER=${{ inputs.path }}
+          DEPLOYFOLDER=${{ inputs.hostpath }}
         elif [ "${{ inputs.branch }}" == "nightly" ]; then
-          DEPLOYFOLDER=${{ inputs.path }}-beta
+          DEPLOYFOLDER=${{ inputs.hostpath }}-beta
         else
           echo 'output=not_need' >> $GITHUB_OUTPUT
           exit 0
