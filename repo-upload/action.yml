@@ -71,8 +71,6 @@ runs:
         fi
         for dist in $(echo ${{ inputs.distro }} | sed 's/,/ /g'); do
           ssh -i ${HOME}/.ssh/${{ env.RANDOM }} repo@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
-          # hack to collect distribution keys
-          ssh -i ${HOME}/.ssh/${{ env.RANDOM }} repo@${{ inputs.hostname }} "flock /home/repo/distro echo ${dist} >> /home/repo/distro"
           for file in $(echo "${{ inputs.files }}" | tr '\n' ' '); do
             rsync -e "ssh -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr ${{ inputs.path }}/${file} repo@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
           done
