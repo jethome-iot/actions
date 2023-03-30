@@ -1,6 +1,9 @@
 name: 'Upload repo packages'
 description: 'Upload Ubuntu/Debian packages to JetHome repository'
 inputs:
+  user:
+    required: false
+    default: 'repo'
   hostname:
     required: false
     description: 'hostname of the repo site'
@@ -39,17 +42,19 @@ runs:
   using: "composite"
   steps:
     - name: "Generate key id" # We need this in case we run multiple runners on one machine
+      id: genkey
       shell: bash
       run: |
         echo "RANDOM=ID_$((RANDOM%1000000))" >> $GITHUB_ENV
         echo "HOME=${HOME}" >> $GITHUB_ENV
+        mkdir -p ${HOME}/.ssh
 
     - name: Install SSH key for storage
       uses: shimataro/ssh-key-action@v2
       with:
         key: ${{ inputs.SSH_KEY }}
         name: ${{ env.RANDOM }}
-        known_hosts: ${{ inputs.SSH_KNOWNHOSTS_UPLOAD }}
+        known_hosts: unnecessary
         if_key_exists: replace
         config: |
           Host bastion
@@ -72,10 +77,10 @@ runs:
           exit 0
         fi
         for dist in $(echo ${{ inputs.distro }} | sed 's/,/ /g'); do
-          ssh -i ${HOME}/.ssh/${{ env.RANDOM }} repo@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
+          ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }} ${{ inputs.user }}@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
           files=$(echo "${{ inputs.files }}" | tr '\n' ' ')
           for file in $(ls ${{ inputs.path }}/${files}); do
-            rsync -e "ssh -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr ${{ inputs.path }}/${file} repo@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
+            rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr ${{ inputs.path }}/${file} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
           done
         done
 
