@@ -65,13 +65,16 @@ runs:
           DEPLOYFOLDER=${{ inputs.hostpath }}
         elif [ "${{ inputs.branch }}" == "nightly" ]; then
           DEPLOYFOLDER=${{ inputs.hostpath }}-beta
+        elif [ "${{ inputs.branch }}" == "test" ]; then
+          DEPLOYFOLDER=${{ inputs.hostpath }}-test
         else
           echo 'output=not_need' >> $GITHUB_OUTPUT
           exit 0
         fi
         for dist in $(echo ${{ inputs.distro }} | sed 's/,/ /g'); do
           ssh -i ${HOME}/.ssh/${{ env.RANDOM }} repo@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
-          for file in $(echo "${{ inputs.files }}" | tr '\n' ' '); do
+          files=$(echo "${{ inputs.files }}" | tr '\n' ' ')
+          for file in $(ls ${{ inputs.path }}/${files}); do
             rsync -e "ssh -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr ${{ inputs.path }}/${file} repo@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
           done
         done
