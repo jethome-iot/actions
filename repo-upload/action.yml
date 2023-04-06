@@ -76,11 +76,13 @@ runs:
           echo 'output=not_need' >> $GITHUB_OUTPUT
           exit 0
         fi
+        echo dist: $(echo ${{ inputs.distro }} | sed 's/,/ /g')
         for dist in $(echo ${{ inputs.distro }} | sed 's/,/ /g'); do
           ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }} ${{ inputs.user }}@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
           files=$(echo "${{ inputs.files }}" | tr '\n' ' ')
           CURDIR=$(pwd)
           cd "${{ inputs.path }}"
+          echo filelist: $(ls ${files})
           for file in $(ls ${files}); do
             rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr ${file} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
           done
