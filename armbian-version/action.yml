@@ -1,0 +1,43 @@
+name: 'Update Armbian VERSION from armbian-os repo'
+description: 'Copy version info from stable/nightly.json to VERSION'
+inputs:
+  pathos:
+    required: true
+    description: 'path to the armbian os repo'
+    default: 'os'
+  patharmbian:
+    required: true
+    description: 'path to the armbian build repo'
+    default: 'build'
+  beta:
+    required: true
+    description: 'yes: nightly, no: stable'
+    default: 'yes'
+
+outputs:
+  version:
+    description: "result version"
+    value: ${{ steps.copyversion.outputs.output }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Copy version"
+      id: copyversion
+      shell: bash
+      run: |
+        if [ "${{ inputs.beta }}" == "yes" ]; then
+          BRANCH=nightly
+        else
+          BRANCH=stable
+        fi
+        CURDIR=$(pwd)
+        cd "${{ inputs.pathos }}"
+        VERSION=$(jq -r '.version' ${BRANCH}.json)
+        VERSIONJH="jh.$(jq -r '.version' ${BRANCH}-jethome.json | cut -d '.' -f 3 | xargs -n 1 printf '%02d')"
+        cd "${CURDIR}"
+        cd "${{ inputs.patharmbian }}"
+        echo "${VERSION}.${VERSIONJH}" > VERSION
+
+        echo 'output=${VERSION}.${VERSIONJH}' >> $GITHUB_OUTPUT
+        exit 0
