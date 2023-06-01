@@ -82,10 +82,10 @@ runs:
             REPOTARGET=$(_jq '.repo_target')
             if [[ "${REPOTARGET}" == "armbian-${dist}" || "${REPOTARGET}" == "armbian" ]]; then
               for file in $(_jq '.debs' |  jq -r '.[] | @base64') do
-                _jq2() {
+                _jqq() {
                   echo ${file} | base64 --decode | jq -r ${1}
                 }
-                ff=$(_jq2 '.relative_deb_path')
+                ff=$(_jqq '.relative_deb_path')
                 rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr output/debs/${ff} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}    
               done
             fi
