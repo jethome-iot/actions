@@ -1,0 +1,111 @@
+name: 'Upload repo packages'
+description: 'Upload Ubuntu/Debian packages to JetHome repository'
+inputs:
+  user:
+    required: false
+    default: 'repo'
+  hostname:
+    required: false
+    description: 'hostname of the repo site'
+    default: 'repo.jethome.ru'
+  hostpath:
+    required: true
+    description: 'path to the repo'
+    default: '/home/repo/'
+  target:
+    required: true
+    description: 'target repo (armbian, armbian-beta, armbian-test)'
+    default: 'armbian-test'
+  nightly:
+    required: false
+  json:
+    required: true
+    description: 'path to the armbian debs-to-repo-info.json file with packages list'
+  SSH_KEY:
+    required: true
+    description: 'SSH key for repo storage'
+  SSH_KNOWNHOSTS_UPLOAD:
+    required: true
+    description: 'SSH known hosts for repo storage'
+
+outputs:
+  status:
+    description: "result repo push"
+    value: ${{ steps.deploy-to-repo-storage.outputs.output }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Generate key id" # We need this in case we run multiple runners on one machine
+      id: genkey
+      shell: bash
+      run: |
+        echo "RANDOM=ID_$((RANDOM%1000000))" >> $GITHUB_ENV
+        echo "HOME=${HOME}" >> $GITHUB_ENV
+        mkdir -p ${HOME}/.ssh
+
+    - name: Install SSH key for storage
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ inputs.SSH_KEY }}
+        name: ${{ env.RANDOM }}
+        known_hosts: unnecessary
+        if_key_exists: replace
+        config: |
+          Host bastion
+            HostName repo.jethome.ru
+            User repo
+            IdentityFile ${HOME}/.ssh/${{ env.RANDOM }}
+
+    - name: Deploy to repo storage
+      id: deploy-to-repo-storage
+      shell: bash
+      run: |
+        #if [ "${{ inputs.stable }}" == "no" ]; then
+        #  DEPLOYFOLDER=${{ inputs.hostpath }}
+        #elif [ "${{ inputs.branch }}" == "yes" ]; then
+        #  DEPLOYFOLDER=${{ inputs.hostpath }}-beta
+        #elif [ "${{ inputs.branch }}" == "test" ]; then
+        #  DEPLOYFOLDER=${{ inputs.hostpath }}-test
+        #else
+        #  echo 'output=not_need' >> $GITHUB_OUTPUT
+        #  exit 0
+        #fi
+        DEPLOYFOLDER=${{ inputs.hostpath }}/${{ inputs.target }}
+
+        for dist in $(cat ${{ inputs.json }} | jq -r .[].repo_target  | grep armbian- | sort | uniq | cut -d '-' -f 2); do
+          ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }} ${{ inputs.user }}@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
+          for row in $(cat ${{ inputs.json }} | jq -r '.[] | @base64'); do
+            _jq() {
+              echo ${row} | base64 --decode | jq -r ${1}
+            }
+            REPOTARGET=$(_jq '.repo_target')
+            if [[ "${REPOTARGET}" == "armbian-${dist}" || "${REPOTARGET}" == "armbian" ]]; then
+              for file in $(_jq '.debs' |  jq -r '.[] | @base64') do
+                _jq2() {
+                  echo ${file} | base64 --decode | jq -r ${1}
+                }
+                ff=$(_jq2 '.relative_deb_path')
+                rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr output/debs/${ff} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}    
+              done
+            fi
+            REPOTARGET=$(ecjq -r .repo_target
+          done
+
+
+        done
+
+        
+        echo dist: $(echo ${{ inputs.distro }} | sed 's/,/ /g')
+        for dist in $(echo ${{ inputs.distro }} | sed 's/,/ /g'); do
+          ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }} ${{ inputs.user }}@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
+          files=$(echo "${{ inputs.files }}" | tr '\n' ' ')
+          echo filelist: $(ls ${files})
+          for file in $(ls ${files}); do
+            rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr ${file} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
+          done
+          cd ${CURDIR}
+        done
+
+        echo 'output=ok' >> $GITHUB_OUTPUT
+        exit 0
