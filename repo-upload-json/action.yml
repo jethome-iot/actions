@@ -17,6 +17,7 @@ inputs:
     description: 'target repo (armbian, armbian-beta, armbian-test)'
     default: 'armbian-test'
   nightly:
+    default: 'yes'
     required: false
   json:
     required: true
@@ -61,6 +62,11 @@ runs:
       id: deploy-to-repo-storage
       shell: bash
       run: |
+        if [ "${{ inputs.nightly }}" == "yes" ]; then
+          DEBSDIR=debs-beta
+        else
+          DEBSDIR=debs
+        fi
         #if [ "${{ inputs.stable }}" == "no" ]; then
         #  DEPLOYFOLDER=${{ inputs.hostpath }}
         #elif [ "${{ inputs.branch }}" == "yes" ]; then
@@ -81,30 +87,17 @@ runs:
             }
             REPOTARGET=$(_jq '.repo_target')
             if [[ "${REPOTARGET}" == "armbian-${dist}" || "${REPOTARGET}" == "armbian" ]]; then
-              for file in $(_jq '.debs' |  jq -r '.[] | @base64') do
+              for file in $(_jq '.debs' |  jq -r '.[] | @base64'); do
                 _jqq() {
                   echo ${file} | base64 --decode | jq -r ${1}
                 }
-                ff=$(_jqq '.relative_deb_path')
-                rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr output/debs/${ff} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}    
+                FF=$(_jqq '.relative_deb_path')
+                rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr output/${DEBSDIR}/${FF} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
               done
             fi
-            REPOTARGET=$(ecjq -r .repo_target
           done
 
 
-        done
-
-        
-        echo dist: $(echo ${{ inputs.distro }} | sed 's/,/ /g')
-        for dist in $(echo ${{ inputs.distro }} | sed 's/,/ /g'); do
-          ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }} ${{ inputs.user }}@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
-          files=$(echo "${{ inputs.files }}" | tr '\n' ' ')
-          echo filelist: $(ls ${files})
-          for file in $(ls ${files}); do
-            rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr ${file} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
-          done
-          cd ${CURDIR}
         done
 
         echo 'output=ok' >> $GITHUB_OUTPUT
