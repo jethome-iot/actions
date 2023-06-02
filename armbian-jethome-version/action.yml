@@ -1,0 +1,73 @@
+name: 'Update JetHome Armbian subversion'
+description: 'update stable/nightly-jethome.json'
+inputs:
+  file:
+    required: true
+    description: 'path to the json file'
+    default: 'nightly-jethome.json'
+  type:
+    required: true
+    description: 'major/minor'
+    default: 'minor'
+  do:
+    required: true
+    description: 'inc/dec/zero'
+    default: 'inc'
+  override:
+    required: false
+    description: 'override version'
+    default: ''
+
+outputs:
+  version:
+    description: "result version"
+    value: ${{ steps.setversion.outputs.output }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Set version"
+      id: setversion
+      shell: bash
+      run: |
+
+        temp=$(mktemp)
+
+        if [ -z "${{ inputs.override }}" ]; then
+          VERMAJ="$(jq -r '.version' ${{ inputs.file }} | cut -d '.' -f 1)"
+          VERMIN="$(jq -r '.version' ${{ inputs.file }} | cut -d '.' -f 2)"
+          if [ "${{ inputs.type }}" == "major"]; then
+            field=${VERMAJ}
+          else
+            field=${VERMIN}
+          fi
+
+          if [ "${{ inputs.do }}" == "inc"]; then
+            field=$((field+1))
+          else 
+            if [ "${{ inputs.do }}" == "dec"]; then
+              field=$((field-1))
+            else
+              field=0
+            fi
+          fi
+          if [ "${{ inputs.type }}" == "major"]; then
+            VERMAJ=${field}
+          else
+            VERMIN=${field}
+          fi
+
+          VER="${VERMAJ}.${VERMIN}"
+
+        else
+          VER=${{ inputs.override }}
+          
+        fi
+
+        cat "${{ inputs.file }}" | jq ".version |= \"${VER}\"" > "${temp}"
+        mv "${temp}" "${{ inputs.file }}"
+        rm -f "${temp}"
+
+
+        echo 'output=${VER}' >> $GITHUB_OUTPUT
+        exit 0
