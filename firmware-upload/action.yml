@@ -162,7 +162,8 @@ runs:
               -F "firmware_file=@${{inputs.firmware_file}}" \
               -F 'force_overwrite="'${{inputs.force_overwrite}}'"' \
               "${{inputs.url}}/api/upload_firmware/")
-          if [ $(echo ${RESPONSE} | jq .success) == "true" ]; then
+          TESTERR="$(echo ${RESPONSE} | jq .success)" || true
+          if [ "${TESTERR}" == "true" ]; then
             break
           fi
         done
