@@ -166,7 +166,7 @@ runs:
           if [ "${TESTERR}" == "true" ]; then
             break
           fi
-          sleep 10
+          sleep $((i*10))
         done
         rm -rf ${TMPHASH}
         echo -n "Upload firmware ${{inputs.firmware_file}}: "
