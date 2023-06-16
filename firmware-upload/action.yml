@@ -161,11 +161,12 @@ runs:
               -F "hash_pgp=@${TMPHASH}" \
               -F "firmware_file=@${{inputs.firmware_file}}" \
               -F 'force_overwrite="'${{inputs.force_overwrite}}'"' \
-              "${{inputs.url}}/api/upload_firmware/")
+              "${{inputs.url}}/api/upload_firmware/") || true
           TESTERR="$(echo ${RESPONSE} | jq .success)" || true
           if [ "${TESTERR}" == "true" ]; then
             break
           fi
+          sleep 10
         done
         rm -rf ${TMPHASH}
         echo -n "Upload firmware ${{inputs.firmware_file}}: "
