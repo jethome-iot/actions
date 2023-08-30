@@ -152,7 +152,7 @@ runs:
         echo "${HASHPGP}" >${TMPHASH}
         for i in 1 2 3; do
           echo "Upload firmware_type=${{inputs.fullslug}} try $i"
-          RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
+          RESPONSE=$(curl --limit-rate 5M -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
               -F 'vendor="'${{steps.checkvars.outputs.vendor}}'"' \
               -F 'platform="'${{steps.checkvars.outputs.platform}}'"' \
               -F 'firmware_type="'${{steps.checkvars.outputs.slug}}'"' \
