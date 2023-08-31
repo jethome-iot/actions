@@ -27,6 +27,13 @@
         "slug": "bookworm",
         "name": "Debian 12 Bookworm"
     },
+    "trixie": {
+        "final": false,
+        "subtypes": [],
+        "is_active": true,
+        "slug": "trixie",
+        "name": "Debian 13 Trixie"
+    },
     "focal": {
         "final": false,
         "subtypes": [],
@@ -47,5 +54,12 @@
         "is_active": true,
         "slug": "lunar",
         "name": "Ubuntu 23.04 Lunar Lobster"
-    }
+    },
+    "mantic": {
+        "final": false,
+        "subtypes": [],
+        "is_active": true,
+        "slug": "mantic",
+        "name": "Ubuntu 23.10 Manticore"
+    },
 }
