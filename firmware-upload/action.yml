@@ -129,7 +129,7 @@ runs:
               ${SUPPORTED_DEVICES} \
               "${{inputs.url}}/api/create_firmware/")
           echo -n "Create firmware slot: "
-          if [ $(echo ${RESPONSE} | jq .success) == "true" ]; then
+          if [ "$(echo ${RESPONSE} | jq .success)" == "true" ]; then
             echo "Success"
           else
             echo "Error"
@@ -173,7 +173,7 @@ runs:
         done
         rm -rf ${TMPHASH}
         echo -n "Upload firmware ${{inputs.firmware_file}}: "
-        if [ $(echo ${RESPONSE} | jq .success) == "true" ]; then
+        if [ "$(echo ${RESPONSE} | jq .success)" == "true" ] ; then
           echo "Success"
         else
           echo "Error"
