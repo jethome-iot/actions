@@ -40,7 +40,7 @@ def generate_armbian():
 def generate_jhaos():
     pass
 
-def generate_jharmbian():
+def generate_armbianha():
     pass
 
 
