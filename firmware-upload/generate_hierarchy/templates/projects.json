@@ -21,7 +21,7 @@
         "subtypes": []
     },
     "ArmbianHA": {
-        "slug": "jharmbian",
+        "slug": "armbianha",
         "name": "Armbian with HA Supervised",
         "final": false,
         "is_active": true,
