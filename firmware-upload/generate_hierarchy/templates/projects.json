@@ -20,6 +20,13 @@
         "is_active": true,
         "subtypes": []
     },
+    "ArmbianHA": {
+        "slug": "jharmbian",
+        "name": "Armbian with HA Supervised",
+        "final": false,
+        "is_active": true,
+        "subtypes": []
+    },
     "Firmware": {
         "slug": "firmware",
         "name": "Firmware",

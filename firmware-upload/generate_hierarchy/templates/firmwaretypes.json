@@ -1,23 +1,29 @@
 {
-	"sdcard": {
-	    "name": "SDCard"
-	},
-	"burn": {
-	    "name": "Burnable"
-	},
-	"zigbee.ota": {
-	    "name": "Zigbee OTA"
-	},
-	"windows": {
-	    "name": "Windows"
-	},
-	"hex": {
-	    "name": "HEX"
-	},
-	"s37": {
-	    "name": "S37"
-	},
-	"gbl": {
-	    "name": "GBL"
-	}
+    "sdcard": {
+        "name": "SDCard"
+    },
+    "burn": {
+        "name": "Burnable"
+    },
+    "burnhas": {
+        "name": "Burnable Home Assistant Supervised"
+    },
+    "burnhaos": {
+            "name": "Burnable HAOS"
+    },
+    "zigbee.ota": {
+        "name": "Zigbee OTA"
+    },
+    "windows": {
+        "name": "Windows"
+    },
+    "hex": {
+        "name": "HEX"
+    },
+    "s37": {
+        "name": "S37"
+    },
+    "gbl": {
+        "name": "GBL"
+    }
 }

@@ -40,6 +40,9 @@ def generate_armbian():
 def generate_jhaos():
     pass
 
+def generate_jharmbian():
+    pass
+
 
 def generate_burntools():
     pass
