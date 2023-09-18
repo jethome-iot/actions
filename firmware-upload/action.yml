@@ -89,6 +89,9 @@ runs:
         ARGS=$(echo ${{inputs.fullslug}}| sed 's/\./ /g'| sed 's/\//-/g')
         HIERARCHY=$(python3 main.py ${ARGS})
 
+        echo "|+++++++++++++++++++++++++++++++++++++++++|"
+        echo ${HIERARCHY}
+        echo "|+++++++++++++++++++++++++++++++++++++++++|"
         echo ${HIERARCHY} > ${TMPJSON}
         echo Add category to fw
         RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
