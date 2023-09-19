@@ -20,6 +20,9 @@ inputs:
   hashpgp_file:
     required: false
     description: 'PGP/hash of the firmware. If not specified, it will be calculated automatically in sha256 format.'
+  changelog_file:
+    required: false
+    description: 'Changelog of the firmware. If not specified, it will be empty.'
   firmware_file:
     required: true
     description: 'Firmware file.'
@@ -117,6 +120,12 @@ runs:
         else
           SUPPORTED_DEVICES="-F supported_devices=\"${{inputs.supported_devices}}\" "
         fi
+        if [ -z ${{inputs.changelog_file}} ] ; then
+          CHANGELOG_FILE=""
+        else
+          CHANGELOG_FILE="-F changelog_file=@${{inputs.changelog_file}} "
+        fi
+
         if [ "${{inputs.generatefirmwareslot}}" == "true" ]; then  
           RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
               -F 'vendor="'${{steps.checkvars.outputs.vendor}}'"' \
@@ -127,6 +136,7 @@ runs:
               -F "update_latest_ref=${{inputs.update_latest}}" \
               -F "force_overwrite=true" \
               ${SUPPORTED_DEVICES} \
+              ${CHANGELOG_FILE} \
               "${{inputs.url}}/api/create_firmware/")
           echo -n "Create firmware slot: "
           if [ "$(echo ${RESPONSE} | jq .success)" == "true" ]; then
