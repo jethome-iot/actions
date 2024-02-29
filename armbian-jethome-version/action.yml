@@ -61,7 +61,7 @@ runs:
 
         else
           VER=${{ inputs.override }}
-          
+
         fi
 
         cat "${{ inputs.file }}" | jq ".version |= \"${VER}\"" > "${temp}"

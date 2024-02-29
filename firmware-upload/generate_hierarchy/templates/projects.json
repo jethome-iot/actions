@@ -13,6 +13,13 @@
         "is_active": true,
         "subtypes": []
     },
+    "MagicBoxFW": {
+        "slug": "magicbox",
+        "name": "MagicBox Firmware",
+        "final": false,
+        "is_active": true,
+        "subtypes": []
+    },
     "JHAOS": {
         "slug": "jhaos",
         "name": "JetHome Home Assistant OS",
