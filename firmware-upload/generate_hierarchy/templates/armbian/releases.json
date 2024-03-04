@@ -61,5 +61,12 @@
         "is_active": true,
         "slug": "mantic",
         "name": "Ubuntu 23.10 Manticore"
+    },
+    "noble": {
+        "final": false,
+        "subtypes": [],
+        "is_active": true,
+        "slug": "noble",
+        "name": "Ubuntu 24.04 Noble Numbat"
     }
 }
