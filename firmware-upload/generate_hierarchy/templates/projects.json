@@ -14,7 +14,7 @@
         "subtypes": []
     },
     "MagicBoxFW": {
-        "slug": "magicbox",
+        "slug": "magicos",
         "name": "MagicBox Firmware",
         "final": false,
         "is_active": true,

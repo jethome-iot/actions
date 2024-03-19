@@ -11,6 +11,12 @@
         "slug": "j100",
         "name": "J100"
     },
+    "j200": {
+        "firmware_types": [],
+        "is_active": true,
+        "slug": "j200",
+        "name": "J200"
+    },
     "ws7": {
         "firmware_types": [],
         "is_active": true,
