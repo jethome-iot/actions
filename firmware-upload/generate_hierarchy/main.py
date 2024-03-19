@@ -40,6 +40,9 @@ def generate_armbian():
 def generate_jhaos():
     pass
 
+def generate_magicos():
+    pass
+
 def generate_armbianha():
     pass
 
