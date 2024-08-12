@@ -4,6 +4,7 @@ inputs:
   user:
     required: false
     default: 'repo'
+    description: 'user for repo storage'
   hostname:
     required: false
     description: 'hostname of the repo site'
@@ -19,6 +20,7 @@ inputs:
   nightly:
     default: 'yes'
     required: false
+    description: 'nightly build'
   json:
     required: true
     description: 'path to the armbian debs-to-repo-info.json file with packages list'
