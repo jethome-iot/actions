@@ -94,7 +94,7 @@ runs:
                   echo ${file} | base64 --decode | jq -r ${1}
                 }
                 FF=$(_jqq '.relative_deb_path')
-                rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr output/${DEBSDIR}/${FF} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
+                [ -f "output/${DEBSDIR}/${FF}" ] && rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr output/${DEBSDIR}/${FF} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
               done
             fi
           done
