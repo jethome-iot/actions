@@ -22,6 +22,6 @@ def generate(subtypes, load_json):
         fwtypechannel['name'] = 'Nightly branch: ' + channel
         fwtypechannel['slug'] = channel.lower()
     fwtypechannel.pop('subtypes', None)
-    fwtypechannel['final'] = 'true'
+    fwtypechannel['final'] = True
     fwtype['subtypes'] = [fwtypechannel]
     return fwtype
