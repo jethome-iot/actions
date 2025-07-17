@@ -1,8 +1,11 @@
 import sys
 
+ALIAS = ['magicos', 'armbianha', 'jhaos' ]
+
+# Generic firmware storage json generator
+
 def generate(subtypes, load_json):
-    # subtypes: [fwtype, channel]
-    # subtype fwtype: release, bootloader, coordinator, _router_, espjhome
+    # subtypes: [channel]
     # subtype channel: release, rc, nightly, branch-name
     if len(subtypes) < 1:
         print(f'Error: For {__name__}, need channel')
