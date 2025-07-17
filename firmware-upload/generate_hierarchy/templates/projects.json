@@ -34,7 +34,7 @@
         "is_active": true,
         "subtypes": []
     },
-    "Firmware": {
+    "firmware": {
         "slug": "firmware",
         "name": "Firmware",
         "final": false,

@@ -22,5 +22,12 @@
       "is_active": true,
       "slug": "bootloader",
       "name": "Bootloader firmware"
+  },
+    "espjhome": {
+    "slug": "espjhome",
+    "name": "ESPJHome Firmware",
+    "final": false,
+    "is_active": true,
+    "subtypes": []
   }
 }

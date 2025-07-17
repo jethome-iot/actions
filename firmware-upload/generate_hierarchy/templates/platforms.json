@@ -34,5 +34,11 @@
         "is_active": true,
         "slug": "z4",
         "name": "Z4"
+    },
+    "jxd": {
+        "firmware_types": [],
+        "is_active": true,
+        "slug": "jxd",
+        "name": "JXD"
     }
 }
