@@ -20,7 +20,7 @@
         "is_active": true,
         "subtypes": []
     },
-    "JHAOS": {
+    "jhaos": {
         "slug": "jhaos",
         "name": "JetHome Home Assistant OS",
         "final": false,
