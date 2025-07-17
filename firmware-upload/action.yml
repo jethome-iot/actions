@@ -126,7 +126,7 @@ runs:
           CHANGELOG_FILE="-F changelog_file=@${{inputs.changelog_file}} "
         fi
 
-        if [ "${{inputs.generatefirmwareslot}}" == "true" ]; then  
+        if [ "${{inputs.generatefirmwareslot}}" == "true" ]; then
           RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
               -F 'vendor="'${{steps.checkvars.outputs.vendor}}'"' \
               -F 'platform="'${{steps.checkvars.outputs.platform}}'"' \
@@ -171,7 +171,7 @@ runs:
               -F 'firmware_type="'${{steps.checkvars.outputs.slug}}'"' \
               -F 'version="'${{steps.checkvars.outputs.version}}'"' \
               -F 'image_type="'${{inputs.image_type}}'"' \
-              -F "hash_pgp=@${TMPHASH}" \
+              -F "hash_pgp=${HASHPGP}" \
               -F "firmware_file=@${{inputs.firmware_file}}" \
               -F 'force_overwrite="'${{inputs.force_overwrite}}'"' \
               "${{inputs.url}}/api/upload_firmware/") || true
