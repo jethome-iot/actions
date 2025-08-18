@@ -9,7 +9,7 @@ def generate(subtypes, load_json):
     # subtype channel: release, rc, nightly, branch-name
     if len(subtypes) < 1:
         print(f'Error: For {__name__}, need channel')
-        sys.exit(2)
+        sys.exit(3)
     channel = subtypes[0]
     channels = load_json('channels.json')
     if channel in channels:
