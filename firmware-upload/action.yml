@@ -69,6 +69,8 @@ runs:
           VERSION="${DATE}"
         else
           VERSION="${{inputs.version}}"
+          # change all non-alpabet characters from VERSION to '-'
+          VERSION="$(echo ${VERSION} | sed 's/[^a-zA-Z0-9._-]/-/g')"
         fi
 
         #          vendor.platform.project.channel.release.branch
