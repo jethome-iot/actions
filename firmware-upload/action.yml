@@ -116,12 +116,12 @@ runs:
       id: add-fw-slot
       shell: bash
       run: |
-        echo "Create firmware slot ${{steps.checkvars.outputs.vendor}}.${{steps.checkvars.outputs.platform}}.${{steps.checkvars.outputs.slug}}"
         if [ -z ${{inputs.supported_devices}} ] ; then
           SUPPORTED_DEVICES=""
         else
           SUPPORTED_DEVICES="-F supported_devices=\"${{inputs.supported_devices}}\" "
         fi
+        echo "Create firmware slot ${{steps.checkvars.outputs.vendor}}.${{steps.checkvars.outputs.platform}}.${{steps.checkvars.outputs.slug}} ${SUPPORTED_DEVICES}"
         if [ -z ${{inputs.changelog_file}} ] ; then
           CHANGELOG_FILE=""
         else

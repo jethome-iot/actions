@@ -1,13 +1,18 @@
 import sys
 
 def generate(subtypes, load_json):
-    # subtypes: [fwtype, channel]
+    # subtypes: [fwtype, <device>, channel]
     # subtype fwtype: release, bootloader, coordinator, _router_, espjhome
+    # subtype device: jxd-r6, jxd-r6-lcd, etc (can be ommited)
     # subtype channel: release, rc, nightly, branch-name
     if len(subtypes) < 2:
         print("Error: For Firmware, need channel, fwtype")
         sys.exit(2)
-    fwtype, channel = subtypes[:2]
+    if len(subtypes) == 3:
+        fwtype, device, channel = subtypes[:3]
+    else:
+        fwtype, channel = subtypes[:2]
+        device = None
     fwtypes = load_json('firmware/type.json')
     channels = load_json('channels.json')
     try:
@@ -23,5 +28,14 @@ def generate(subtypes, load_json):
         fwtypechannel['slug'] = channel.lower()
     fwtypechannel.pop('subtypes', None)
     fwtypechannel['final'] = True
-    fwtype['subtypes'] = [fwtypechannel]
+    if device:
+        fwtypedevice = {}
+        fwtypedevice['slug'] = device.lower()
+        fwtypedevice['name'] = device
+        fwtypedevice['final'] = False
+        fwtypedevice['is_active'] = True
+        fwtypedevice['subtypes'] = [fwtypechannel]
+        fwtype['subtypes'] = [fwtypedevice]
+    else:
+        fwtype['subtypes'] = [fwtypechannel]
     return fwtype
