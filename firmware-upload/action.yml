@@ -83,6 +83,8 @@ runs:
 
         echo "date=${DATE}" >> $GITHUB_OUTPUT
         echo "version=${VERSION}" >> $GITHUB_OUTPUT
+        echo "checkvars ok"
+
 
     - name: Apply fw template
       id: apply-fw-template
@@ -92,7 +94,9 @@ runs:
         TMPJSON=$(mktemp)
         cd "${{ github.action_path }}/generate_hierarchy"
         ARGS=$(echo ${{inputs.fullslug}}| sed 's/\./ /g'| sed 's/\//-/g')
+        echo "=== ARGS: ${ARGS} ==="
         HIERARCHY=$(python3 main.py ${ARGS})
+        echo "hier generated"
 
         echo "|+++++++++++++++++++++++++++++++++++++++++|"
         echo ${HIERARCHY}
