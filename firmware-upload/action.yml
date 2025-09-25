@@ -95,6 +95,7 @@ runs:
         cd "${{ github.action_path }}/generate_hierarchy"
         ARGS=$(echo ${{inputs.fullslug}}| sed 's/\./ /g'| sed 's/\//-/g')
         echo "=== ARGS: ${ARGS} ==="
+        python3 main.py ${ARGS}
         HIERARCHY=$(python3 main.py ${ARGS})
         echo "hier generated"
 
