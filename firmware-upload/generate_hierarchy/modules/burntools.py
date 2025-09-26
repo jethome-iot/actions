@@ -1,6 +1,6 @@
 import sys
 
-ALIAS = ['magicos', 'armbianha', 'jhaos', 'burntools']
+ALIAS = ['burntools']
 
 # Generic firmware storage json generator
 

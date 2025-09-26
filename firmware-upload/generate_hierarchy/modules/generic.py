@@ -1,8 +1,9 @@
 import sys
 
-ALIAS = ['magicos', 'armbianha', 'jhaos' ]
+ALIAS = ['magicos', 'armbianha', 'jhaos']
 
 # Generic firmware storage json generator
+
 
 def generate(subtypes, load_json):
     # subtypes: [channel]
