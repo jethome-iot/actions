@@ -81,25 +81,29 @@ runs:
         #fi
         DEPLOYFOLDER=${{ inputs.hostpath }}/${{ inputs.target }}
 
-        for dist in $(cat ${{ inputs.json }} | jq -r .[].repo_target  | grep armbian- | sort | uniq | cut -d '-' -f 2); do
-          ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }} ${{ inputs.user }}@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
-          for row in $(cat ${{ inputs.json }} | jq -r '.[] | @base64'); do
-            _jq() {
-              echo ${row} | base64 --decode | jq -r ${1}
+        # Process all artifacts - relative_deb_path already contains correct subpath
+        # Examples:
+        #   armbian -> linux-image.deb (no subpath)
+        #   armbian-extra/noble-utils -> extra/noble-utils/base-files.deb (has subpath)
+        for row in $(cat ${{ inputs.json }} | jq -r '.[] | @base64'); do
+          _jq() {
+            echo ${row} | base64 --decode | jq -r ${1}
+          }
+          for file in $(_jq '.debs' | jq -r '.[] | @base64'); do
+            _jqq() {
+              echo ${file} | base64 --decode | jq -r ${1}
             }
-            REPOTARGET=$(_jq '.repo_target')
-            if [[ "${REPOTARGET}" == "armbian-${dist}" || "${REPOTARGET}" == "armbian" ]]; then
-              for file in $(_jq '.debs' |  jq -r '.[] | @base64'); do
-                _jqq() {
-                  echo ${file} | base64 --decode | jq -r ${1}
-                }
-                FF=$(_jqq '.relative_deb_path')
-                [ -f "output/${DEBSDIR}/${FF}" ] && rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr output/${DEBSDIR}/${FF} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
-              done
+            FF=$(_jqq '.relative_deb_path')
+            if [ -f "output/${DEBSDIR}/${FF}" ]; then
+              # Create target directory if path contains subdirectory
+              SUBDIR=$(dirname "${FF}")
+              if [[ "${SUBDIR}" != "." ]]; then
+                ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }} ${{ inputs.user }}@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${SUBDIR}"
+              fi
+              # Upload file preserving relative path structure
+              rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr output/${DEBSDIR}/${FF} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${FF}
             fi
           done
-
-
         done
 
         echo 'output=ok' >> $GITHUB_OUTPUT
