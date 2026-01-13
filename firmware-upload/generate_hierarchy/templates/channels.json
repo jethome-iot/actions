@@ -30,5 +30,13 @@
         "slug": "beta",
         "subtypes": [],
         "final": false
+    },
+    "dev": {
+        "name": "Dev",
+        "storage_policy": "Nightly (keep last 30)",
+        "is_active": true,
+        "slug": "dev",
+        "subtypes": [],
+        "final": false
     }
 }
