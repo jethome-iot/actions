@@ -29,5 +29,12 @@
     "final": false,
     "is_active": true,
     "subtypes": []
+  },
+    "jespfw": {
+    "slug": "jespfw",
+    "name": "JESPFW Firmware",
+    "final": false,
+    "is_active": true,
+    "subtypes": []
   }
 }
