@@ -1,0 +1,40 @@
+JetHome.jxd.firmware.espjhome.stand
+[
+    {
+        "is_active": true,
+        "name": "JetHome",
+        "platforms": [
+            {
+                "firmware_types": [
+                    {
+                        "final": false,
+                        "is_active": true,
+                        "name": "Firmware",
+                        "slug": "firmware",
+                        "subtypes": [
+                            {
+                                "final": false,
+                                "is_active": true,
+                                "name": "ESPJHome Firmware",
+                                "slug": "espjhome",
+                                "subtypes": [
+                                    {
+                                        "final": true,
+                                        "is_active": true,
+                                        "name": "Nightly branch: stand",
+                                        "slug": "stand",
+                                        "storage_policy": "Nightly (keep last 30)"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "is_active": true,
+                "name": "JXD",
+                "slug": "jxd"
+            }
+        ],
+        "slug": "jethome"
+    }
+]
