@@ -29,8 +29,16 @@ check_main() {
             echo "✅ PASSED: ${FULLSLUG} matches $2"
         fi
     else
-        echo "⚠️  No reference file $2; output below:"
-        cat "${TMPFILE}"
+        if [ "${UPDATE_GOLDEN:-}" = "1" ]; then
+            mv "${TMPFILE}" "${OUTFILE}"
+            echo "📝 UPDATED: created reference file $2 for ${FULLSLUG}"
+            return 0
+        else
+            echo "❌ FAILED: reference file $2 is missing for ${FULLSLUG}" >&2
+            rm -f "${TMPFILE}"
+            FAILED=1
+            return 1
+        fi
     fi
 
     rm -f "${TMPFILE}"

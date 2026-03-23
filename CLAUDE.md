@@ -44,12 +44,12 @@ Each module exports `generate(subtypes, load_json)` and optionally `ALIAS` list.
 
 ## Testing
 
-Run hierarchy generator tests (from `firmware-upload/generate_hierarchy/`):
+Run hierarchy generator tests (from anywhere):
 ```bash
-cd firmware-upload/generate_hierarchy && bash test.sh
+bash firmware-upload/generate_hierarchy/tests/test.sh
 ```
 
-Tests compare `python3 main.py <args>` output against reference files (`test*.out`). To add a test case, add a `check_main` call in `test.sh` with a new reference output file.
+Tests compare `python3 main.py <args>` output against reference files in `tests/`. To add a test case, add a `check_main` call in `tests/test.sh` with a new reference output file. To regenerate golden files: `UPDATE_GOLDEN=1 bash firmware-upload/generate_hierarchy/tests/test.sh`.
 
 ## Code Style
 
