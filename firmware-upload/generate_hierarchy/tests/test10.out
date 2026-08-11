@@ -1,0 +1,32 @@
+JetHome.j100.jhrescueos.release
+[
+    {
+        "is_active": true,
+        "name": "JetHome",
+        "platforms": [
+            {
+                "firmware_types": [
+                    {
+                        "final": false,
+                        "is_active": true,
+                        "name": "JetHome Rescue OS",
+                        "slug": "jhrescueos",
+                        "subtypes": [
+                            {
+                                "final": true,
+                                "is_active": true,
+                                "name": "Release",
+                                "slug": "release",
+                                "storage_policy": "Release (keep last 4)"
+                            }
+                        ]
+                    }
+                ],
+                "is_active": true,
+                "name": "J100",
+                "slug": "j100"
+            }
+        ],
+        "slug": "jethome"
+    }
+]

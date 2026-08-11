@@ -27,6 +27,13 @@
         "is_active": true,
         "subtypes": []
     },
+    "jhrescueos": {
+        "slug": "jhrescueos",
+        "name": "JetHome Rescue OS",
+        "final": false,
+        "is_active": true,
+        "subtypes": []
+    },
     "ArmbianHA": {
         "slug": "armbianha",
         "name": "Armbian with HA Supervised",
