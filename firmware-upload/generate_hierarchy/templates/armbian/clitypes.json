@@ -1,0 +1,30 @@
+{
+    "cli": {
+        "final": false,
+        "is_active": true,
+        "slug": "cli",
+        "name": "no desktop",
+        "subtypes": []
+    },
+    "gnome": {
+        "final": false,
+        "is_active": true,
+        "slug": "gnome",
+        "name": "Gnome",
+        "subtypes": []
+    },
+    "xfce": {
+        "final": false,
+        "is_active": true,
+        "slug": "xfce",
+        "name": "Xfce",
+        "subtypes": []
+    },
+    "kde": {
+        "final": false,
+        "is_active": true,
+        "slug": "kde",
+        "name": "KDE Plasma",
+        "subtypes": []
+    }
+}
