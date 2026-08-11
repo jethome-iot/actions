@@ -1,0 +1,56 @@
+JetHome.j100.Armbian.release.bookworm.kde-plasma.edge
+[
+    {
+        "is_active": true,
+        "name": "JetHome",
+        "platforms": [
+            {
+                "firmware_types": [
+                    {
+                        "final": false,
+                        "is_active": true,
+                        "name": "Armbian",
+                        "slug": "armbian",
+                        "subtypes": [
+                            {
+                                "final": false,
+                                "is_active": true,
+                                "name": "Release",
+                                "slug": "release",
+                                "storage_policy": "Release (keep last 4)",
+                                "subtypes": [
+                                    {
+                                        "final": false,
+                                        "is_active": true,
+                                        "name": "Debian 12 Bookworm",
+                                        "slug": "bookworm",
+                                        "subtypes": [
+                                            {
+                                                "final": false,
+                                                "is_active": true,
+                                                "name": "KDE Plasma",
+                                                "slug": "kde-plasma",
+                                                "subtypes": [
+                                                    {
+                                                        "final": true,
+                                                        "is_active": true,
+                                                        "name": "Edge Kernel",
+                                                        "slug": "edge"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "is_active": true,
+                "name": "J100",
+                "slug": "j100"
+            }
+        ],
+        "slug": "jethome"
+    }
+]

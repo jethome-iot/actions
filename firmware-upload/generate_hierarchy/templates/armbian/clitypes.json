@@ -6,11 +6,74 @@
         "name": "no desktop",
         "subtypes": []
     },
+    "budgie": {
+        "final": false,
+        "is_active": true,
+        "slug": "budgie",
+        "name": "Budgie",
+        "subtypes": []
+    },
+    "cinnamon": {
+        "final": false,
+        "is_active": true,
+        "slug": "cinnamon",
+        "name": "Cinnamon",
+        "subtypes": []
+    },
+    "deepin": {
+        "final": false,
+        "is_active": true,
+        "slug": "deepin",
+        "name": "Deepin",
+        "subtypes": []
+    },
+    "enlightenment": {
+        "final": false,
+        "is_active": true,
+        "slug": "enlightenment",
+        "name": "Enlightenment",
+        "subtypes": []
+    },
     "gnome": {
         "final": false,
         "is_active": true,
         "slug": "gnome",
         "name": "Gnome",
+        "subtypes": []
+    },
+    "i3-wm": {
+        "final": false,
+        "is_active": true,
+        "slug": "i3-wm",
+        "name": "i3 Window Manager",
+        "subtypes": []
+    },
+    "kde-neon": {
+        "final": false,
+        "is_active": true,
+        "slug": "kde-neon",
+        "name": "KDE Neon",
+        "subtypes": []
+    },
+    "kde-plasma": {
+        "final": false,
+        "is_active": true,
+        "slug": "kde-plasma",
+        "name": "KDE Plasma",
+        "subtypes": []
+    },
+    "kde-plasma-mobile": {
+        "final": false,
+        "is_active": true,
+        "slug": "kde-plasma-mobile",
+        "name": "KDE Plasma Mobile",
+        "subtypes": []
+    },
+    "mate": {
+        "final": false,
+        "is_active": true,
+        "slug": "mate",
+        "name": "MATE",
         "subtypes": []
     },
     "xfce": {
@@ -20,11 +83,11 @@
         "name": "Xfce",
         "subtypes": []
     },
-    "kde": {
+    "xmonad": {
         "final": false,
         "is_active": true,
-        "slug": "kde",
-        "name": "KDE Plasma",
+        "slug": "xmonad",
+        "name": "Xmonad",
         "subtypes": []
     }
 }
