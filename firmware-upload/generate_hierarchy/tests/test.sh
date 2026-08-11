@@ -54,5 +54,9 @@ check_main "JetHome.j80.BurnTools" "test6.out"
 check_main "JetHome.j100.magicos.nightly" "test7.out"
 check_main "JetHome.jxd.firmware.espjhome.jxd-r6-e1eth-lcd.stand" "test8.out"
 check_main "JetHome.jxd.firmware.jespfw.stand" "test9.out"
+check_main "JetHome.j100.jhrescueos.release" "test10.out"
+check_main "JetHome.j100.jhrescueos.nightly" "test11.out"
+check_main "JetHome.j100.Armbian.release.bookworm.kde-plasma.edge" "test12.out"
+check_main "JetHome.j100.Armbian.nightly.trixie.gnome.current" "test13.out"
 
 exit ${FAILED}

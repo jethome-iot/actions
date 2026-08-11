@@ -37,7 +37,7 @@ Collection of GitHub composite actions for JetHome firmware and package manageme
 |--------|-------------|----------------|
 | `armbian.py` | armbian | `channel release [clitype] branch` (3-4 subtypes) |
 | `firmware.py` | firmware | `fwtype [device] channel` (2-3 subtypes) |
-| `generic.py` | magicos, armbianha, jhaos | `channel` (1 subtype) |
+| `generic.py` | magicos, armbianha, jhaos, jhrescueos | `channel` (1 subtype) |
 | `burntools.py` | burntools | no subtypes |
 
 Each module exports `generate(subtypes, load_json)` and optionally `ALIAS` list. Templates live in `generate_hierarchy/templates/`.

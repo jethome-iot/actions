@@ -1,0 +1,56 @@
+JetHome.j100.Armbian.nightly.trixie.gnome.current
+[
+    {
+        "is_active": true,
+        "name": "JetHome",
+        "platforms": [
+            {
+                "firmware_types": [
+                    {
+                        "final": false,
+                        "is_active": true,
+                        "name": "Armbian",
+                        "slug": "armbian",
+                        "subtypes": [
+                            {
+                                "final": false,
+                                "is_active": true,
+                                "name": "Nightly",
+                                "slug": "nightly",
+                                "storage_policy": "Nightly (keep last 30)",
+                                "subtypes": [
+                                    {
+                                        "final": false,
+                                        "is_active": true,
+                                        "name": "Debian 13 Trixie",
+                                        "slug": "trixie",
+                                        "subtypes": [
+                                            {
+                                                "final": false,
+                                                "is_active": true,
+                                                "name": "Gnome",
+                                                "slug": "gnome",
+                                                "subtypes": [
+                                                    {
+                                                        "final": true,
+                                                        "is_active": true,
+                                                        "name": "Stable Kernel",
+                                                        "slug": "current"
+                                                    }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "is_active": true,
+                "name": "J100",
+                "slug": "j100"
+            }
+        ],
+        "slug": "jethome"
+    }
+]

@@ -1,6 +1,6 @@
 import sys
 
-ALIAS = ['magicos', 'armbianha', 'jhaos']
+ALIAS = ['magicos', 'armbianha', 'jhaos', 'jhrescueos']
 
 # Generic firmware storage json generator
 
