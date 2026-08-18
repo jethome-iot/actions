@@ -16,8 +16,8 @@
 - Never modify `tests/argv/*.expected` in the extraction or fix commits. That immutability is the safety argument of the whole PR. The single exception is Task 10, which adds one new golden file.
 - The wire format must not change. `-F 'vendor="'${V}'"'` produces argv `[-F] [vendor="JetHome"]`; curl's `-F` parser strips the literal quotes itself. Keep the quote wrapping in any rewrite.
 - Do not add `set -euo pipefail`. The retry loop relies on `|| true` and several steps continue after a non-zero status. Out of scope for this PR.
-- All consumers pin `@master`: 185 uses of `firmware-upload`, 29 of `armbian-jethome-version`, 17 of `repo-upload-json`. A merge to master reaches production immediately; there is no staging.
-- `repo-upload` and `armbian-version` have no consumers in the JetHome repositories. Work on those first — a mistake there costs nothing.
+- Every consumer found pins `@master`. A merge to master reaches production immediately; there is no staging, and there is no way to canary a change.
+- **Treat all five actions as consumed.** Counts from a local grep are a lower bound over whichever repositories happen to be cloned on the machine, and GitHub code search is also partial — it returns 13 references where the local mirror alone holds 185. `armbian-version` is used by the Armbian repository. Do not order the work by "this one is unused"; nothing here is known to be unused.
 - Python stays stdlib-only. The extractor may not import PyYAML.
 - Code comments in Russian, per CLAUDE.md. Python 4-space indent, YAML 2-space.
 
@@ -83,7 +83,7 @@ tests/
 
 ### Task 1: Harness skeleton, proved on armbian-version
 
-`armbian-version` has no consumers and one short run block, so it is the safest place to get the harness right.
+`armbian-version` has the shortest run block of the five — one `if`, two `jq` reads, one file write — so it is the cheapest place to get the harness itself right. That is a statement about the size of the step, not about who depends on it: it is used by the Armbian repository, so its golden has to be read as carefully as any other.
 
 **Files:**
 - Create: `tests/lib/log_argv.sh`, `tests/stubs/{curl,ssh,rsync,sha256sum,date,mktemp,sleep}`, `tests/lib/extract_run_block.py`, `tests/run_action.sh`, `tests/test_actions.sh`, `tests/scenarios/armbian-version-nightly.env`
@@ -409,8 +409,8 @@ tests. Stub the external commands on PATH, capture their argv, and freeze
 it as a golden so a later refactor can be shown not to change what the
 actions send.
 
-Cover armbian-version first: it has no consumers, so a mistake in the
-harness itself costs nothing."
+Cover armbian-version first: it has the shortest step body, so the harness
+mechanics are settled against the simplest case before the harder ones."
 ```
 
 ---
