@@ -58,5 +58,7 @@ check_main "JetHome.j100.jhrescueos.release" "test10.out"
 check_main "JetHome.j100.jhrescueos.nightly" "test11.out"
 check_main "JetHome.j100.Armbian.release.bookworm.kde-plasma.edge" "test12.out"
 check_main "JetHome.j100.Armbian.nightly.trixie.gnome.current" "test13.out"
+check_main "JetHome.jxd.firmware.esphome.release" "test14.out"
+check_main "JetHome.jxd.firmware.esphome.nightly" "test15.out"
 
 exit ${FAILED}

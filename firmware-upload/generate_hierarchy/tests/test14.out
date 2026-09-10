@@ -1,0 +1,40 @@
+JetHome.jxd.firmware.esphome.release
+[
+    {
+        "is_active": true,
+        "name": "JetHome",
+        "platforms": [
+            {
+                "firmware_types": [
+                    {
+                        "final": false,
+                        "is_active": true,
+                        "name": "Firmware",
+                        "slug": "firmware",
+                        "subtypes": [
+                            {
+                                "final": false,
+                                "is_active": true,
+                                "name": "ESPHome Firmware",
+                                "slug": "esphome",
+                                "subtypes": [
+                                    {
+                                        "final": true,
+                                        "is_active": true,
+                                        "name": "Release",
+                                        "slug": "release",
+                                        "storage_policy": "Release (keep last 4)"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ],
+                "is_active": true,
+                "name": "JXD",
+                "slug": "jxd"
+            }
+        ],
+        "slug": "jethome"
+    }
+]
