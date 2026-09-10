@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # Weekly updates for used GitHub Actions.
+  # Dependabot does not traverse subdirectories on its own: "/" covers
+  # only .github/workflows, every directory with an action.yml must be
+  # listed explicitly (dependabot-core#6704).
+  - package-ecosystem: "github-actions"
+    directories:
+      - "/"
+      - "/armbian-jethome-version"
+      - "/armbian-version"
+      - "/firmware-upload"
+      - "/repo-upload"
+      - "/repo-upload-json"
+    schedule:
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
