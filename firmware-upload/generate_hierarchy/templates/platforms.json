@@ -17,6 +17,12 @@
         "slug": "j200",
         "name": "J200"
     },
+   "j310": {
+        "firmware_types": [],
+        "is_active": true,
+        "slug": "j310",
+        "name": "J310"
+    },
     "ws7": {
         "firmware_types": [],
         "is_active": true,
