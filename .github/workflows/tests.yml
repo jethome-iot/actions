@@ -14,7 +14,7 @@ permissions:
 jobs:
   test:
     name: ${{ matrix.action }}
-    runs-on: self-hosted
+    runs-on: [self-hosted, ubuntu-latest]
     # Сюиты поднимают локальные слушатели; повисшая проверка не должна
     # держать self-hosted раннер до таймаута задания
     timeout-minutes: 10
