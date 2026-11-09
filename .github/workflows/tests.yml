@@ -1,0 +1,47 @@
+name: Tests
+
+# Каждое действие с тестами прогоняется на pull request, на прямой коммит в
+# master (в этом репозитории они бывают) и по кнопке.
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.action }}
+    runs-on: self-hosted
+    # Сюиты поднимают локальные слушатели; повисшая проверка не должна
+    # держать self-hosted раннер до таймаута задания
+    timeout-minutes: 10
+    strategy:
+      # Падение одной сюиты не должно скрывать результат другой
+      fail-fast: false
+      matrix:
+        include:
+          - action: firmware-upload
+            suite: firmware-upload/generate_hierarchy/tests/test.sh
+          - action: tsa-publish
+            suite: tsa-publish/tests/test.sh
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show the toolchain
+        shell: bash
+        run: |
+          # Версия curl в логе нужна предметно: сюита tsa-publish фиксирует
+          # поведение curl при возобновлении заливки, и если оно сменится,
+          # сопоставить это с обновлением curl на раннере надо будет сразу
+          bash --version | head -1
+          python3 --version
+          curl --version | head -1
+
+      - name: Run tests
+        shell: bash
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: bash "${SUITE}"
