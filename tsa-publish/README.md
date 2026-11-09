@@ -76,7 +76,7 @@ So when the checkout is not at the workspace root, read both values in the
 checkout directory and pass them in:
 
 ```yaml
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           path: firmware
 
@@ -148,9 +148,9 @@ on:
 
 jobs:
   publish:
-    runs-on: self-hosted
+    runs-on: [self-hosted, ubuntu-latest]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Publish to tsa
         id: tsa
@@ -174,6 +174,13 @@ jobs:
         shell: bash
         run: echo "accepted ${{ steps.tsa.outputs.artifacts_accepted }} artifact(s)"
 ```
+
+Both examples name an action by major version for readability, and both ask
+for the pair of runner labels the other workflows in this organisation use. A
+working workflow pins an action by commit digest instead — see
+`.github/workflows/tests.yml` in this repository for the form, and leave the
+pin to Renovate. A digest written out here would go stale unnoticed: Renovate
+rewrites workflow and action files, not documentation.
 
 ## How it works
 
