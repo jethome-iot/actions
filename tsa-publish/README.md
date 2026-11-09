@@ -7,6 +7,24 @@ test stands and tools pull firmware from here.
 API base address is `{url}/{vendor}/{product}/api/v1`, authorized with the
 `X-API-Key` header. The key is issued per product.
 
+## The product on the server
+
+The product must already exist and must be created with
+`version_order: natural`. Our versions are not semver — neither `v1.16` (two
+components and a leading `v`) nor `jxdio-expander-0.1` — and a product left on
+the default semver ordering rejects the very first call:
+
+```
+POST /releases → 400  version "v1.16" is not semver 2.0.0
+```
+
+This is a server-side product setting, nothing the action can do.
+
+Existing products: `jethome/tst-firmware-esp`, `jethome/tst-firmware-mcu`,
+`jethome/cp210x-tools` — all three are set to `natural` and keep the last 10
+releases on the `release` channel. Retention is a server policy; the action
+knows nothing about it.
+
 ## Inputs
 
 | Input | Required | Default | Purpose |
@@ -27,8 +45,13 @@ The release version is used as given: the leading `v` of the tag is **not**
 stripped, so the version on the platform matches what the firmware reports
 about itself.
 
-Without `public` the build is internal and is not published into public
-channels. Without `publish` the release is only accepted, not published.
+**Pass `public: 'true'` for a build that is meant to be public.** Without it
+the release counts as an internal build and cannot be published into a public
+channel at all: the server refuses with `internal build: CI uploaded …`, and
+there is no "publish anyway" in the admin panel — an administrator has to mark
+the release public first. Tag builds of the firmware matrices are public ones.
+
+Without `publish` the release is only accepted, not published.
 
 ## Outputs
 
@@ -97,9 +120,6 @@ jobs:
         run: echo "accepted ${{ steps.tsa.outputs.artifacts_accepted }} artifact(s)"
 ```
 
-Existing products on the server: `jethome/tst-firmware-esp`,
-`jethome/tst-firmware-mcu`, `jethome/cp210x-tools`.
-
 ## How it works
 
 1. **prepare** — parse `artifacts`, compute `size` and `sha256` per file,
@@ -121,6 +141,12 @@ the server already stores under the same `sha256` is accepted without an upload.
 
 A server answer of `approval` for a channel is normal, not a failure: public
 channels of a product are published by an administrator.
+
+Acceptance is not yet publication. Until a release is published into a channel
+it lands in the `full` tree only, which is reachable from networks with full
+access, and a permanent file URL answers `404` to an anonymous client. After
+publication the same URL serves the file with
+`Cache-Control: public, max-age=31536000, immutable`.
 
 ## The API key
 
