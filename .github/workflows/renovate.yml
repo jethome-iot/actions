@@ -1,0 +1,135 @@
+# -----------------------------------------------------------------------------
+# renovate — обновления зависимостей ведёт собственный бот на наших раннерах,
+# как в остальных репозиториях организации. Размещённое приложение Mend не
+# используется: это внешний сервис.
+#
+# Образ закреплён по digest — тег Renovate перезаписывается несколько раз в
+# день, и плавающий тег означал бы, что код, открывающий PR в этот репозиторий,
+# может смениться без PR здесь. Свой пин Renovate поднимает сам: строка-
+# разметка над ним описана в renovate.json как зависимость.
+#
+# PR открываются от имени GitHub App, а не встроенным GITHUB_TOKEN: у PR,
+# открытого встроенным токеном, прогоны других workflow не стартуют сами —
+# то есть workflow Tests на обновлении действий не отработал бы, и обновление
+# приехало бы непроверенным. Client ID — переменная RENOVATE_APP_CLIENT_ID,
+# приватный ключ — секрет RENOVATE_APP_PRIVATE_KEY, оба уровня организации.
+# Прогон без записи остаётся запасным режимом: workflow_dispatch со включённым
+# входом dry-run и случай, когда переменные не заданы — ничего не создаётся и
+# не меняется, в логе видно только то, что Renovate нашёл.
+# -----------------------------------------------------------------------------
+
+name: renovate
+
+on:
+  # Ежедневно, не в начало часа: под нагрузкой прогон по расписанию
+  # задерживается или выбрасывается, поэтому документация советует выбирать
+  # время в середине часа. Время разведено с соседними репозиториями, чтобы
+  # боты не приходили на раннеры одновременно.
+  schedule:
+    - cron: "47 3 * * *"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "Прогон без записи: только показать, что нашлось"
+        type: boolean
+        default: false
+
+# Запись идёт токеном App, а не этими правами. Чтение нужно шире одного
+# contents: прогон без записи читает существующие PR, issue Dependency
+# Dashboard и проверки у существующих ветвей renovate/*.
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  checks: read
+  statuses: read
+
+# Обход репозитория не прерывается на середине: отменённый прогон оставил бы
+# часть ветвей созданными, а часть — нет.
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  renovate:
+    name: renovate
+    runs-on: [self-hosted, ubuntu-latest]
+    timeout-minutes: 30
+    steps:
+      # Renovate запускается образом, поэтому docker на раннере обязателен.
+      # Без этой проверки его отсутствие выглядит как ошибка запуска
+      # контейнера, а не как незаконченная настройка раннера.
+      - name: Проверить, что docker есть
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v docker >/dev/null; then
+            echo "::error::на раннере нет docker — Renovate запускается образом, закреплённым по digest"
+            exit 1
+          fi
+          docker version --format '{{.Server.Version}}'
+
+      # Пустая переменная пропускает шаг, и прогон уходит в режим без записи
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app-token
+        if: vars.RENOVATE_APP_CLIENT_ID != ''
+        with:
+          client-id: ${{ vars.RENOVATE_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RENOVATE_APP_PRIVATE_KEY }}
+
+      - name: Прогнать Renovate
+        shell: bash
+        env:
+          # Версия и digest ниже — часть строки, которую переписывает Renovate,
+          # поэтому рядом с ними не повторяется ни версия, ни дата выпуска:
+          # такой комментарий бот не переписывает, и он разошёлся бы с пином.
+          # Возраст релиза держит minimumReleaseAge в renovate.json.
+          # renovate: datasource=docker depName=renovate/renovate
+          IMAGE: renovate/renovate:44.155.1@sha256:f5796f26088c0f5debb07c16fa9e801145e4d3ba9717d9cc22ca8cd265e2a0eb
+          APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          BUILTIN_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          FORCED_DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          set -euo pipefail
+
+          # Без токена App записи быть не может: PR от встроенного
+          # GITHUB_TOKEN не запустил бы Tests (см. шапку). Такой прогон
+          # идёт только на чтение.
+          token="${APP_TOKEN}"
+          dry_run=""
+          if [[ -z "${token}" ]]; then
+            echo "::notice::App не настроен — прогон без записи"
+            token="${BUILTIN_TOKEN}"
+            dry_run="full"
+          elif [[ "${FORCED_DRY_RUN}" == "true" ]]; then
+            echo "::notice::запрошен прогон без записи"
+            dry_run="full"
+          fi
+
+          # Токен передаётся через окружение шага, а не значением в argv:
+          # аргументы docker run видны любому процессу на раннере в ps,
+          # а маскирование секретов GitHub касается только лога.
+          export RENOVATE_TOKEN="${token}"
+
+          # Флаг передаётся переменной, а не аргументом: аргументы заменяют
+          # команду образа, и renovate тогда не запускается вовсе.
+          #
+          # RENOVATE_EXIT_CODE_FOR_ERRORS делает ненулевым выход при нехватке
+          # прав у токена и при конфигурации, которую Renovate отвергает; без
+          # него оба случая уходят в лог, а прогон остаётся зелёным. Исходы
+          # группы RepositoryErrors (репозиторий отключён, архивирован, без
+          # конфигурации, недоступен) по-прежнему дают ноль — это известная
+          # дыра самой опции, а не наша.
+          args=(
+            -e RENOVATE_PLATFORM=github
+            -e RENOVATE_REPOSITORIES="${REPO}"
+            -e RENOVATE_TOKEN
+            -e RENOVATE_EXIT_CODE_FOR_ERRORS=true
+            -e LOG_LEVEL=info
+          )
+          if [[ -n "${dry_run}" ]]; then
+            args+=(-e "RENOVATE_DRY_RUN=${dry_run}")
+          fi
+
+          docker run --rm "${args[@]}" "${IMAGE}"
