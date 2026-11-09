@@ -1,0 +1,4 @@
+$ release_info.py poll-state fixtures/resp-artifact-nostatus.json --size 131072
+=== stderr ===
+error: artifact state has no usable "status" field
+=== exit 2 ===

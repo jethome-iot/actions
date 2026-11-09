@@ -1,4 +1,0 @@
-$ release_info.py field fixtures/resp-create-nopublish.json publish
-=== stderr ===
-error: server response has no field 'publish'
-=== exit 2 ===

@@ -1,0 +1,7 @@
+--- firmware.factory.bin (stream board-selftest, kind factory, 63 bytes)
+  status uploading, 20 byte(s) on the server, sending from there
+  accepted in full, sha256 confirmed by the server
+1 artifact(s) accepted
+exit: 0
+accepted file: 1
+server saw: 1 poll(s), 1 PUT(s), status uploaded, received 63

@@ -1,0 +1,9 @@
+--- firmware.factory.bin (stream board-selftest, kind factory, 63 bytes)
+  status pending, 0 byte(s) on the server, sending from there
+error: firmware.factory.bin rejected: size or sha256 does not match the declared value.
+The uploaded data was dropped on the server. The file differs from what
+release-info.json declares, retrying would not help.
+{"error": "sha256 mismatch", "received": 0}
+exit: 1
+accepted file: absent
+server saw: 1 poll(s), 1 PUT(s), status pending, received 0

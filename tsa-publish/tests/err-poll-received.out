@@ -1,0 +1,4 @@
+$ release_info.py poll-state fixtures/resp-artifact-badreceived.json --size 131072
+=== stderr ===
+error: artifact state has a bad "received" value: '64 KiB'
+=== exit 2 ===

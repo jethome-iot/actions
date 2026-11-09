@@ -76,14 +76,35 @@ runs:
         TSA_RETRY_DELAY: ${{ inputs.retry_delay }}
       run: |
         set -euo pipefail
-        # Маскируем ключ в логах раннера: дальше он живёт только в env и в
-        # curl-конфиге с правами 0600, в командную строку не попадает никогда
-        echo "::add-mask::${TSA_API_KEY}"
 
+        # Ключ с переводом строки проверяем ДО ::add-mask::: маска действует
+        # построчно, поэтому хвост после '\n' напечатался бы в лог открытым
+        # текстом. В конфиге curl тот же хвост стал бы отдельной директивой
+        # ('user = …' и прочее), молча подменив опции запроса
+        case "${TSA_API_KEY}" in
+          *$'\n'*|*$'\r'*)
+            echo "error: api_key contains a newline; pass the key as a single line"
+            exit 1
+            ;;
+        esac
         if [ -z "${TSA_API_KEY}" ]; then
           echo "error: api_key is empty"
           exit 1
         fi
+
+        # Маскируем ключ в логах раннера: дальше он живёт только в env и в
+        # curl-конфиге с правами 0600, в командную строку не попадает никогда
+        echo "::add-mask::${TSA_API_KEY}"
+
+        # Ключ продукта нельзя отправлять по открытому каналу. Опечатка в
+        # схеме входа url иначе утекла бы молча
+        case "${TSA_URL}" in
+          https://*) ;;
+          *)
+            echo "error: url must use https, got '${TSA_URL}'"
+            exit 1
+            ;;
+        esac
         if ! [[ "${TSA_RETRY_DELAY}" =~ ^[0-9]+$ ]]; then
           echo "error: retry_delay must be a whole number of seconds, got '${TSA_RETRY_DELAY}'"
           exit 1
@@ -92,7 +113,11 @@ runs:
         # Рабочий каталог шага: release-info.json и план заливки, без секретов
         RUN_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/tsa-publish-XXXXXX")"
         echo "run_dir=${RUN_DIR}" >> "${GITHUB_OUTPUT}"
-        echo "base=${TSA_URL%/}/${TSA_VENDOR}/${TSA_PRODUCT}/api/v1" >> "${GITHUB_OUTPUT}"
+        BASE_URL="${TSA_URL}"
+        while [ "${BASE_URL%/}" != "${BASE_URL}" ]; do
+          BASE_URL="${BASE_URL%/}"
+        done
+        echo "base=${BASE_URL}/${TSA_VENDOR}/${TSA_PRODUCT}/api/v1" >> "${GITHUB_OUTPUT}"
 
         # git_commit: короткий SHA текущего коммита
         if [ -n "${TSA_GIT_COMMIT}" ]; then
@@ -139,10 +164,10 @@ runs:
           exit 1
         fi
 
-        python3 "${TSA_ACTION_PATH}/release_info.py" "${BUILD_ARGS[@]}" \
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" "${BUILD_ARGS[@]}" \
             > "${RUN_DIR}/release-info.json"
 
-        python3 "${TSA_ACTION_PATH}/release_info.py" plan \
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" plan \
             --artifacts-file "${RUN_DIR}/artifacts.txt" \
             > "${RUN_DIR}/plan.tsv"
 
@@ -171,8 +196,11 @@ runs:
         trap 'rm -f "${CURL_CFG}"' EXIT
         write_api_config "${CURL_CFG}"
 
+        # Без таймаутов полуоткрытое соединение висит до таймаута задания
         BODY="${TSA_RUN_DIR}/create-response.json"
+        : > "${BODY}"
         CODE="$(curl --config "${CURL_CFG}" -sS --no-progress-meter \
+            --connect-timeout 30 --max-time 120 \
             -o "${BODY}" -w '%{http_code}' \
             -H 'Content-Type: application/json' \
             --data-binary "@${TSA_RUN_DIR}/release-info.json" \
@@ -201,11 +229,11 @@ runs:
 
         # Решение сервера по каналам автопубликации. approval — не ошибка:
         # публичные каналы продукта штатно публикуются администратором
-        python3 "${TSA_ACTION_PATH}/release_info.py" publish-summary "${BODY}"
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" publish-summary "${BODY}"
 
         # Лимит на размер артефакта сервер сообщает здесь — проверяем до
         # заливки, чтобы не упасть на середине гигабайта
-        python3 "${TSA_ACTION_PATH}/release_info.py" limit-check \
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" limit-check \
             --artifacts-file "${TSA_RUN_DIR}/artifacts.txt" "${BODY}"
 
     - name: Upload artifacts
@@ -228,91 +256,13 @@ runs:
         trap 'rm -f "${CURL_CFG}"' EXIT
         write_api_config "${CURL_CFG}"
 
-        HELPER="${TSA_ACTION_PATH}/release_info.py"
-        BODY="${TSA_RUN_DIR}/artifact-response.json"
-        ACCEPTED=0
+        # Цикл заливки вынесен в скрипт: он покрыт тестом против заглушки
+        # сервера, встроенный в action.yml покрыть было нечем
+        export TSA_HELPER="${TSA_ACTION_PATH}/release_info.py"
+        export TSA_CURL_CFG="${CURL_CFG}"
+        bash "${TSA_ACTION_PATH}/upload_artifacts.sh" "${TSA_RUN_DIR}/plan.tsv"
 
-        # План читаем с отдельного дескриптора: curl внутри цикла не должен
-        # дотянуться до него через stdin.
-        # ARTIFACT_PATH, а не PATH: затирать PATH нельзя
-        while IFS=$'\t' read -r STREAM KIND ARTIFACT_PATH FILE <&3; do
-          [ -n "${STREAM:-}" ] || continue
-          ART_URL="${TSA_BASE}/releases/${TSA_VERSION}/artifact?stream=${STREAM}&kind=${KIND}"
-          echo "--- ${FILE} (stream ${STREAM}, kind ${KIND})"
-
-          OK=0
-          for ATTEMPT in 1 2 3 4 5; do
-            # Состояние перечитываем каждую попытку: сервер отдаёт фактический
-            # received, и только от него можно продолжать — часть с разрывом
-            # последовательности он отклоняет
-            CODE="$(curl --config "${CURL_CFG}" -sS --no-progress-meter \
-                -o "${BODY}" -w '%{http_code}' "${ART_URL}")" || CODE="000"
-            if [ "${CODE}" != "200" ]; then
-              echo "  artifact status request returned HTTP ${CODE}"
-              cat "${BODY}" || true
-              sleep "${TSA_RETRY_DELAY}"
-              continue
-            fi
-
-            STATUS="$(python3 "${HELPER}" field "${BODY}" status --default unknown)"
-            RECEIVED="$(python3 "${HELPER}" field "${BODY}" received --default 0)"
-
-            # uploaded/published — файл уже принят. Сервер отдаёт такой статус
-            # и сразу после создания релиза, если файл с тем же sha256 у него
-            # уже есть (дедупликация) — это нормально, заливать нечего
-            if [ "${STATUS}" = "uploaded" ] || [ "${STATUS}" = "published" ]; then
-              echo "  already ${STATUS} on the server, upload skipped"
-              OK=1
-              break
-            fi
-
-            echo "  status ${STATUS}, ${RECEIVED} byte(s) on the server, sending from there (attempt ${ATTEMPT}/5)"
-            # -C 0 curl трактует как «файл целиком» и Content-Range не ставит,
-            # так что отдельная ветка для пустого артефакта не нужна
-            CODE="$(curl --config "${CURL_CFG}" -sS --no-progress-meter \
-                -o "${BODY}" -w '%{http_code}' \
-                -H 'Content-Type: application/octet-stream' \
-                -T "${ARTIFACT_PATH}" -C "${RECEIVED}" "${ART_URL}")" || CODE="000"
-
-            case "${CODE}" in
-              201)
-                echo "  accepted in full, sha256 confirmed by the server"
-                OK=1
-                break
-                ;;
-              202)
-                echo "  part accepted, continuing"
-                ;;
-              409)
-                echo "  server reports the artifact as already accepted, rechecking"
-                ;;
-              416)
-                echo "  offset rejected as out of sequence, re-reading server state"
-                ;;
-              422)
-                echo "error: ${FILE} rejected: size or sha256 does not match the declared value."
-                echo "The uploaded data was dropped on the server. The file differs from what"
-                echo "release-info.json declares, retrying would not help."
-                cat "${BODY}" || true
-                exit 1
-                ;;
-              *)
-                echo "  upload returned HTTP ${CODE}"
-                cat "${BODY}" || true
-                sleep "${TSA_RETRY_DELAY}"
-                ;;
-            esac
-          done
-
-          if [ "${OK}" != "1" ]; then
-            echo "error: ${FILE} was not accepted after 5 attempts"
-            exit 1
-          fi
-          ACCEPTED=$((ACCEPTED + 1))
-        done 3< "${TSA_RUN_DIR}/plan.tsv"
-
-        echo "${ACCEPTED} artifact(s) accepted"
-        echo "accepted=${ACCEPTED}" >> "${GITHUB_OUTPUT}"
+        echo "accepted=$(cat "${TSA_RUN_DIR}/accepted")" >> "${GITHUB_OUTPUT}"
 
     - name: Verify release is complete
       id: verify-release
@@ -334,7 +284,9 @@ runs:
         write_api_config "${CURL_CFG}"
 
         BODY="${TSA_RUN_DIR}/release.json"
+        : > "${BODY}"
         CODE="$(curl --config "${CURL_CFG}" -sS --no-progress-meter \
+            --connect-timeout 30 --max-time 120 \
             -o "${BODY}" -w '%{http_code}' \
             "${TSA_BASE}/releases/${TSA_VERSION}")" || CODE="000"
         if [ "${CODE}" != "200" ]; then
@@ -347,10 +299,10 @@ runs:
         cat "${BODY}"
         echo
 
-        python3 "${TSA_ACTION_PATH}/release_info.py" publish-summary "${BODY}"
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" publish-summary "${BODY}"
         # Релиз собран, когда каждый артефакт в статусе uploaded или published;
         # иначе шаг падает
-        python3 "${TSA_ACTION_PATH}/release_info.py" verify "${BODY}"
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" verify "${BODY}"
 
         DELIM="TSA_RELEASE_EOF_${RANDOM}${RANDOM}"
         {

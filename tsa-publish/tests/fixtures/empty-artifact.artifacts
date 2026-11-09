@@ -1,0 +1,2 @@
+# нулевой артефакт: curl -C 0 посылает пустое тело, отдельной ветки не нужно
+eeprom-programmer  blankfs  build/empty.bin

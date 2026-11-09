@@ -29,7 +29,7 @@ knows nothing about it.
 
 | Input | Required | Default | Purpose |
 |-------|----------|---------|---------|
-| `url` | no | `https://tsa.jethome.com` | Base URL of the server |
+| `url` | no | `https://tsa.jethome.com` | Base URL of the server, must be `https` |
 | `vendor` | no | `jethome` | Vendor slug |
 | `product` | yes | | Product slug, the API key is issued per product |
 | `version` | yes | | Release version, the whole tag (`v1.16`) |
@@ -76,6 +76,8 @@ streams,comma,separated  kind  path  [audience]
 * `kind` — artifact kind within the stream (`factory`, `ram`, `loader`, …).
 * `path` — path to the file, relative to the workspace. The consumer downloads
   it under the file's base name; `size` and `sha256` are computed from the file.
+  Fields are separated by spaces, so **a path cannot contain a space** — such a
+  line would be read as a path plus an `audience`.
 * `audience` — optional. `internal` keeps the file out of the public tree.
 
 Empty lines and lines starting with `#` are ignored. A `(stream, kind)` pair
@@ -130,10 +132,18 @@ jobs:
    release already exists (a re-run), `409` the version is already released with
    different files. Then the server's per-channel publish decision is printed
    and artifact sizes are checked against the server's `max_artifact_size`.
-3. **upload-artifacts** — per artifact `GET {base}/releases/{version}/artifact`
-   for its current `status` and `received`, then `curl -T … -C <received>` to
-   send the rest. Up to five attempts with a `retry_delay` pause. Images run up
-   to 1.5 GB, so resuming matters.
+3. **upload-artifacts** (`upload_artifacts.sh`) — per artifact
+   `GET {base}/releases/{version}/artifact` for its current `status` and
+   `received`, then `curl -T … -C <received>` to send the rest. Images run up
+   to 1.5 GB, so resuming matters. The state is re-read before every attempt,
+   because a part has to start exactly at the server's `received`.
+
+   The budget is five *consecutive* failures per artifact, reset by any
+   progress, so a file the server takes in more than five parts still
+   completes. When the server already holds every byte but has not accepted
+   the artifact yet, no `PUT` is made at all: `curl -T … -C <offset>` with an
+   offset at or past the file size exits with code 18 without sending
+   anything, so the loop waits for the server to settle instead.
 4. **verify-release** — `GET {base}/releases/{version}`, print it and fail
    unless every artifact is `uploaded` or `published`.
 
@@ -167,11 +177,21 @@ bash tsa-publish/tests/test.sh
 ```
 
 The suite checks `artifacts` parsing, `release-info.json` assembly against
-golden files and parsing of server responses. Two checks run against a stdlib
-stub listener instead of the real server: the `Content-Range` that
-`curl -T … -C <offset>` actually sends, which the upload step relies on, and
-that the API key survives escaping into the `curl` config and arrives in the
-`X-API-Key` header unchanged. To regenerate golden files:
-`UPDATE_GOLDEN=1 bash tsa-publish/tests/test.sh`.
+golden files and parsing of server responses. Three groups run against stub
+listeners built from stdlib instead of the real server:
+
+- the `Content-Range` that `curl -T … -C <offset>` actually sends, and that it
+  sends none at offset 0, which is why the upload step needs no special case
+  for an empty artifact;
+- that the API key survives escaping into the `curl` config and arrives in the
+  `X-API-Key` header unchanged;
+- `upload_artifacts.sh` itself against a stub that replays the intake
+  protocol: a fresh upload, a resume from a partial offset, an already
+  accepted artifact, a `422` rejection, the server holding every byte before
+  accepting, a release that never settles, an unreadable body served with
+  `200`, and a file taken in more parts than the failure budget.
+
+To regenerate golden files: `UPDATE_GOLDEN=1 bash tsa-publish/tests/test.sh`
+(this rewrites differing files, not only missing ones).
 
 Publishing itself is not covered: it needs the server and a key.

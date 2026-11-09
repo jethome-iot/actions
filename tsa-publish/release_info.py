@@ -4,7 +4,7 @@
 Подкоманды:
     build            — собрать release-info.json (считает size и sha256 по файлам)
     plan             — выдать план заливки артефактов в виде TSV для shell-цикла
-    field            — достать скалярное поле из JSON-ответа сервера
+    poll-state       — решить по ответу сервера, досылать артефакт или нет
     publish-summary  — расшифровать решение сервера по каналам публикации
     limit-check      — сверить размеры файлов с max_artifact_size сервера
     verify           — проверить, что релиз собран полностью
@@ -21,19 +21,29 @@ import sys
 # Версия формата release-info.json, которую понимает сервер
 INFO_VERSION = 1
 
-# built_at принимается только как RFC 3339 в UTC: иначе релиз уедет с чужим временем
-BUILT_AT_RE = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$')
+# Все шаблоны ниже проверяются только через fullmatch и поэтому заданы без
+# анкеров: '$' в Python совпадает и перед завершающим переводом строки, так что
+# re.match('...$') пропустил бы значение с '\n' на конце — а оно уехало бы и в
+# JSON релиза, и в URL. Через fullmatch такая ошибка невозможна по построению.
 
-# stream и kind подставляются в query-строку запросов к серверу, version — в путь.
-# Разрешаем только то, что в URL не требует экранирования: иначе шаг заливки
-# обратился бы не по тому адресу. '/' в query допустим, в пути версии — нет.
-SLUG_RE = re.compile(r'^[A-Za-z0-9._~/-]+$')
+# built_at принимается только как RFC 3339 в UTC: иначе релиз уедет с чужим временем
+BUILT_AT_RE = re.compile(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z')
+
+# stream и kind подставляются в query-строку запросов к серверу, version,
+# vendor и product — в путь. Разрешаем только то, что в URL не требует
+# экранирования: иначе шаг заливки обратился бы не по тому адресу.
+# '/' в query допустим, в сегменте пути — нет.
+SLUG_RE = re.compile(r'[A-Za-z0-9._~/-]+')
+SLUG_CHARS = 'A-Z a-z 0-9 . _ ~ - /'
+
+SEGMENT_RE = re.compile(r'[A-Za-z0-9._~-]+')
+SEGMENT_CHARS = 'A-Z a-z 0-9 . _ ~ -'
 
 # В версии дополнительно разрешены '+' и ':': версией бывает ISO-таймштамп
 # (2025-12-23T07:05:42+00:00), и сервер такую версию принимает. В пути URL оба
 # символа легальны (RFC 3986, pchar), и '+' в пути — это плюс, а не пробел;
 # в query-строке он читался бы как пробел, поэтому в SLUG_RE его нет.
-VERSION_RE = re.compile(r'^[A-Za-z0-9._+:~-]+$')
+VERSION_RE = re.compile(r'[A-Za-z0-9._+:~-]+')
 VERSION_CHARS = 'A-Z a-z 0-9 . _ + : ~ -'
 
 # Размер блока чтения при подсчёте sha256: образы бывают до 1.5 ГБ
@@ -53,6 +63,18 @@ PUBLISH_DECISIONS = {
 
 class InputError(Exception):
     """Ошибка во входных данных — печатается пользователю без трейсбека."""
+
+
+def check_url_segment(value, name, pattern, chars):
+    """Проверить значение, которое уедет сегментом пути URL."""
+    if not pattern.fullmatch(value):
+        raise InputError(
+            f'{name}: has characters that are not URL-safe '
+            f'(allowed: {chars}), got {value!r}')
+    # Значение из одних точек ('.', '..') — это сегмент относительного пути:
+    # запрос ушёл бы не к релизу, а на уровень выше
+    if set(value) == {'.'}:
+        raise InputError(f'{name}: must not consist of dots only, got {value!r}')
 
 
 def parse_artifacts(text):
@@ -84,11 +106,14 @@ def parse_artifacts(text):
         if len(set(streams)) != len(streams):
             raise InputError(
                 f'artifacts line {lineno}: duplicate stream in {streams_field!r}')
+        # stream и kind уезжают значениями query-параметров, не сегментами
+        # пути: точки и слэши в них путь обойти не могут, а символы, которые
+        # порвали бы саму query ('&', '#', пробел), шаблон не пропускает
         for value, name in [(kind, 'kind')] + [(s, 'stream') for s in streams]:
-            if not SLUG_RE.match(value):
+            if not SLUG_RE.fullmatch(value):
                 raise InputError(
                     f'artifacts line {lineno}: {name} {value!r} has characters '
-                    f'that are not URL-safe (allowed: A-Z a-z 0-9 . _ ~ - /)')
+                    f'that are not URL-safe (allowed: {SLUG_CHARS})')
 
         # Артефакт запрашивается у сервера по паре (stream, kind) — она должна быть
         # уникальной, иначе шаг заливки не сможет различить два артефакта
@@ -120,6 +145,24 @@ def read_artifacts_text(args):
             return f.read()
     except OSError as e:
         raise InputError(f'cannot read artifacts file: {e}')
+    except UnicodeDecodeError as e:
+        raise InputError(f'artifacts file is not valid UTF-8: {e}')
+
+
+def require_file(path, artifact):
+    """Проверить, что файл артефакта на месте, и объяснить разбор строки."""
+    if os.path.isfile(path):
+        return
+    # Поля строки разделены пробелами, поэтому путь с пробелом разбирается
+    # как путь + audience. Без подсказки пользователь видит в ошибке путь,
+    # которого не писал, и ищет опечатку не там
+    hint = ''
+    if artifact['audience']:
+        hint = (f' (line parsed as kind {artifact["kind"]!r}, path '
+                f'{artifact["path"]!r}, audience {artifact["audience"]!r}'
+                f' — a path cannot contain spaces)')
+    raise InputError(
+        f'artifacts line {artifact["lineno"]}: no such file: {path}{hint}')
 
 
 def file_size_and_sha256(path):
@@ -146,26 +189,15 @@ def cmd_build(args):
         if not getattr(args, name):
             raise InputError(f'{name}: must not be empty')
     # vendor и product образуют базовый адрес API {url}/{vendor}/{product}/api/v1
-    for name in ('vendor', 'product'):
-        if not VERSION_RE.match(getattr(args, name)):
-            raise InputError(
-                f'{name}: has characters that are not URL-safe '
-                f'(allowed: A-Z a-z 0-9 . _ ~ -), got {getattr(args, name)!r}')
-    if not BUILT_AT_RE.match(args.built_at):
+    check_url_segment(args.vendor, 'vendor', SEGMENT_RE, SEGMENT_CHARS)
+    check_url_segment(args.product, 'product', SEGMENT_RE, SEGMENT_CHARS)
+    # Версия едет в путь URL и должна совпадать с тем, что прошивка печатает
+    # о себе: ведущую 'v' тега не срезаем, но проверяем набор символов
+    check_url_segment(args.version, 'version', VERSION_RE, VERSION_CHARS)
+    if not BUILT_AT_RE.fullmatch(args.built_at):
         raise InputError(
             f'built_at: expected RFC 3339 in UTC (2026-10-22T08:00:00Z), '
             f'got {args.built_at!r}')
-    # Версия едет в путь URL и должна совпадать с тем, что прошивка печатает
-    # о себе: ведущую 'v' тега не срезаем, но проверяем набор символов
-    if not VERSION_RE.match(args.version):
-        raise InputError(
-            f'version: has characters that are not URL-safe '
-            f'(allowed: {VERSION_CHARS}), got {args.version!r}')
-    # Версия из одних точек ('.', '..') — это сегмент относительного пути:
-    # запрос ушёл бы не к релизу, а на уровень выше
-    if set(args.version) == {'.'}:
-        raise InputError(
-            f'version: must not consist of dots only, got {args.version!r}')
 
     release = {
         'info_version': INFO_VERSION,
@@ -186,9 +218,7 @@ def cmd_build(args):
     entries = []
     for artifact in artifacts:
         path = os.path.join(args.base_dir, artifact['path'])
-        if not os.path.isfile(path):
-            raise InputError(
-                f'artifacts line {artifact["lineno"]}: no such file: {path}')
+        require_file(path, artifact)
         size, sha256 = file_size_and_sha256(path)
         entry = {
             'streams': artifact['streams'],
@@ -210,37 +240,50 @@ def cmd_plan(args):
     """План заливки: по строке на артефакт, поля через табуляцию.
 
     stream — любой из потоков артефакта, по нему шаг заливки спрашивает статус.
+    size нужен шагу заливки, чтобы не досылать уже принятый целиком файл.
     """
     artifacts = parse_artifacts(read_artifacts_text(args))
     for artifact in artifacts:
         path = os.path.join(args.base_dir, artifact['path'])
+        require_file(path, artifact)
         print('\t'.join([
             artifact['streams'][0],
             artifact['kind'],
             path,
             os.path.basename(artifact['path']),
+            str(os.path.getsize(path)),
         ]))
 
 
-def cmd_field(args):
-    """Достать скалярное поле верхнего уровня из JSON-ответа сервера."""
-    try:
-        with open(args.json_file, encoding='utf-8') as f:
-            data = json.load(f)
-    except (OSError, ValueError) as e:
-        raise InputError(f'cannot parse server response: {e}')
-    if not isinstance(data, dict) or args.key not in data:
-        if args.default is None:
-            raise InputError(f'server response has no field {args.key!r}')
-        print(args.default)
-        return
-    value = data[args.key]
-    if isinstance(value, bool):
-        print('true' if value else 'false')
-    elif isinstance(value, (int, float, str)):
-        print(value)
+def cmd_poll_state(args):
+    """Решить, что делать с артефактом, по ответу GET …/artifact.
+
+    Печатает одной строкой: <действие> <принято байт> <статус>, где действие —
+    skip (уже принят), wait (сервер держит все байты, но ещё не принял) либо
+    send (досылать с offset).
+    """
+    data = load_response(args.json_file)
+
+    status = data.get('status')
+    if not isinstance(status, str) or not status:
+        raise InputError('artifact state has no usable "status" field')
+
+    # received уходит в curl -C: нецелое или отрицательное значение curl
+    # отвергает как параметр, и шаг крутил бы пустые попытки
+    received = data.get('received', 0)
+    if isinstance(received, bool) or not isinstance(received, int) or received < 0:
+        raise InputError(
+            f'artifact state has a bad "received" value: {received!r}')
+
+    if status in ACCEPTED_STATUSES:
+        action = 'skip'
+    elif received > 0 and received >= args.size:
+        # curl -T с -C >= размера файла выходит с кодом 18, не послав ни
+        # байта: досылать нечего, надо перечитать состояние
+        action = 'wait'
     else:
-        print(json.dumps(value, sort_keys=True))
+        action = 'send'
+    print(f'{action} {received} {status}')
 
 
 def load_response(path):
@@ -273,9 +316,15 @@ def cmd_limit_check(args):
     """Сверить размеры файлов с лимитом сервера — до начала заливки гигабайтов."""
     data = load_response(args.json_file)
     limit = data.get('max_artifact_size')
-    if not isinstance(limit, int) or isinstance(limit, bool) or limit <= 0:
+    if limit is None:
         print('max_artifact_size: not reported by server, size check skipped')
         return
+    # Присланный, но непригодный лимит — не повод молча отключить проверку:
+    # иначе отказ по размеру случится на середине заливки гигабайта
+    if isinstance(limit, bool) or not isinstance(limit, int) or limit <= 0:
+        raise InputError(
+            f'max_artifact_size: expected a positive whole number of bytes, '
+            f'got {limit!r}')
     artifacts = parse_artifacts(read_artifacts_text(args))
     oversized = []
     for artifact in artifacts:
@@ -356,11 +405,12 @@ def main():
     add_artifacts_args(p_plan)
     p_plan.set_defaults(func=cmd_plan)
 
-    p_field = sub.add_parser('field', help='read scalar field from JSON file')
-    p_field.add_argument('json_file')
-    p_field.add_argument('key')
-    p_field.add_argument('--default', help='value to print when field is absent')
-    p_field.set_defaults(func=cmd_field)
+    p_poll = sub.add_parser('poll-state',
+                            help='decide what to do with an artifact')
+    p_poll.add_argument('json_file')
+    p_poll.add_argument('--size', type=int, required=True,
+                        help='declared size of the artifact file in bytes')
+    p_poll.set_defaults(func=cmd_poll_state)
 
     p_summary = sub.add_parser('publish-summary',
                                help='explain per-channel publish decision')
