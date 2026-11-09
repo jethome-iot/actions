@@ -1,0 +1,57 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
+  "enabledManagers": [
+    "github-actions",
+    "custom.regex"
+  ],
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Renovate: обновления зависимостей",
+  "commitMessagePrefix": "ci:",
+  "commitMessageAction": "update",
+  "pin": {
+    "commitMessageAction": "pin"
+  },
+  "pinDigest": {
+    "commitMessageAction": "pin digest for"
+  },
+  "rollback": {
+    "commitMessageAction": "roll back"
+  },
+  "replacement": {
+    "commitMessageAction": "replace"
+  },
+  "prConcurrentLimit": 5,
+  "prHourlyLimit": 2,
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "packageRules": [
+    {
+      "description": "Actions: minor, patch и переехавший digest одной пачкой. Пин — коммит-SHA с версией в комментарии, и обе части переписываются вместе. Мажоры в группу не входят и приходят своими PR: у действия, которое вызывают чужие workflow, мажор читают отдельно.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest"
+      ],
+      "groupName": "GitHub Actions, minor and patch"
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Образ самого Renovate в его workflow: встроенного менеджера для образа в переменной окружения нет, поэтому пин помечен строкой-комментарием прямо над собой. Без этой разметки Renovate обновлял бы всё, кроме себя.",
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/renovate\\.yml$/"
+      ],
+      "matchStrings": [
+        "#\\s*renovate:\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)[^\\n]*\\n\\s*\\w+:\\s*[^\\s:]+:(?<currentValue>[\\w][\\w.+-]*)@(?<currentDigest>sha256:[a-f0-9]{64})\\s*\\n"
+      ]
+    }
+  ]
+}
