@@ -35,7 +35,7 @@ knows nothing about it.
 | `version` | yes | | Release version, the whole tag (`v1.16`) |
 | `artifacts` | yes | | Artifact list, one per line (see below) |
 | `api_key` | yes | | CI API key, pass from secrets |
-| `built_at` | no | commit time of the tag | Build time, RFC 3339 in UTC |
+| `built_at` | no | commit time of the tag | Build time, RFC 3339 in UTC. Pass it explicitly when the checkout is not at the workspace root — see [Checkout into a subdirectory](#checkout-into-a-subdirectory) |
 | `git_commit` | no | short SHA of the commit | Source commit |
 | `publish` | no | | Autopublish channels, space separated |
 | `public` | no | | `true` for a public build, empty for an internal one |
@@ -54,6 +54,54 @@ there is no "publish anyway" in the admin panel — an administrator has to mark
 the release public first. Tag builds of the firmware matrices are public ones.
 
 Without `publish` the release is only accepted, not published.
+
+## Checkout into a subdirectory
+
+`built_at` and `git_commit` default to values read from the repository in the
+workspace root. **If `actions/checkout` was given a `path:`, the workspace root
+holds no `.git`**, and the defaults behave differently from each other:
+
+- `git_commit` stays correct — it falls back to `GITHUB_SHA`;
+- `built_at` **silently becomes the time of the run**. The step cannot read the
+  commit time, logs `built_at: no git history available, using current time`,
+  and the job stays green.
+
+That substitution is worth avoiding for two reasons. The release records when
+the runner happened to start instead of when the tag was committed, and the
+server keeps the first value it accepted — so a re-run does not correct it.
+And `built_at` is read from the commit precisely so that re-running a job
+yields the same release; the fallback gives that up.
+
+So when the checkout is not at the workspace root, read both values in the
+checkout directory and pass them in:
+
+```yaml
+      - uses: actions/checkout@v4
+        with:
+          path: firmware
+
+      - name: Collect release metadata
+        id: meta
+        shell: bash
+        working-directory: firmware
+        run: |
+          set -euo pipefail
+          built_at=$(TZ=UTC0 git show -s --format=%cd --date=format-local:%Y-%m-%dT%H:%M:%SZ HEAD)
+          git_commit=$(git rev-parse --short=7 HEAD)
+          echo "built_at=${built_at}" >> "$GITHUB_OUTPUT"
+          echo "git_commit=${git_commit}" >> "$GITHUB_OUTPUT"
+
+      - uses: jethome-iot/actions/tsa-publish@master
+        with:
+          built_at: ${{ steps.meta.outputs.built_at }}
+          git_commit: ${{ steps.meta.outputs.git_commit }}
+          # … the rest of the inputs
+```
+
+Assign without `|| true`: a failure to read the commit should fail the step
+rather than quietly degrade, which is the whole point of passing the values
+explicitly. `TZ=UTC0` with `format-local` is what makes the timestamp UTC, in
+the `2026-11-09T19:00:15Z` shape the action accepts.
 
 ## Outputs
 
