@@ -1,5 +1,8 @@
 #!/usr/bin/python3
-"""Зафиксировать, какой Content-Range посылает curl -T с -C <offset>.
+"""Зафиксировать, что curl реально кладёт в запрос заливки артефакта.
+
+Проверяются два допущения шага заливки: Content-Range при возобновлении
+и сохранность версии в пути URL.
 
 Шаг заливки возобновляет передачу через `curl -T <файл> -C <received>` и
 полагается на то, что curl сам выставит `Content-Range: bytes <от>-<до>/<всего>`,
@@ -24,7 +27,7 @@ PAYLOAD = bytes(range(256)) * 4
 WANTED = ('content-range', 'content-length')
 
 
-def run_case(path, resume):
+def run_case(path, resume, url_path='/releases/v1.16/artifact'):
     """Поднять заглушку, сходить на неё curl-ом и вернуть строки запроса."""
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -37,7 +40,7 @@ def run_case(path, resume):
            '-H', 'Content-Type: application/octet-stream', '-T', path]
     if resume is not None:
         cmd += ['-C', resume]
-    cmd.append(f'http://127.0.0.1:{port}/releases/v1.16/artifact')
+    cmd.append(f'http://127.0.0.1:{port}{url_path}')
 
     curl = subprocess.Popen(cmd, stdout=subprocess.DEVNULL,
                             stderr=subprocess.PIPE)
@@ -81,8 +84,17 @@ def main():
         with open(path, 'wb') as f:
             f.write(PAYLOAD)
         print(f'payload: {len(PAYLOAD)} bytes')
-        for label, resume in (('no -C', None), ('-C 0', '0'), ('-C 100', '100')):
-            lines = run_case(path, resume)
+        # Версией бывает ISO-таймштамп: проверяем, что '+' и ':' доезжают в
+        # пути как есть и '+' не превращается в пробел
+        cases = (
+            ('no -C', None, '/releases/v1.16/artifact'),
+            ('-C 0', '0', '/releases/v1.16/artifact'),
+            ('-C 100', '100', '/releases/v1.16/artifact'),
+            ('ISO version in path', None,
+             '/releases/2025-12-23T07:05:42+00:00/artifact'),
+        )
+        for label, resume, url_path in cases:
+            lines = run_case(path, resume, url_path)
             print(f'case {label}:')
             for line in lines:
                 # Версия протокола в строке запроса не влияет на проверку

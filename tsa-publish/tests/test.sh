@@ -128,6 +128,16 @@ check_info "err-bad-slug.out" build "${COMMON[@]}" \
 check_info "err-bad-version.out" build --base-dir fixtures --vendor jethome \
     --product tst-firmware-esp --version "v1.16/../v1.15" --git-commit abc1234 \
     --built-at 2026-10-22T08:00:00Z --artifacts-file fixtures/minimal.artifacts
+# версией бывает ISO-таймштамп: '+' и ':' сервер принимает, и в пути URL
+# они легальны — такая версия должна проходить
+check_info "iso-version.json.out" build --base-dir fixtures --vendor jethome \
+    --product tst-firmware-mcu --version "2025-12-23T07:05:42+00:00" \
+    --git-commit abc1234 --built-at 2026-10-22T08:00:00Z \
+    --artifacts-file fixtures/minimal.artifacts
+# версия из одних точек — это сегмент относительного пути, не релиз
+check_info "err-dot-version.out" build --base-dir fixtures --vendor jethome \
+    --product tst-firmware-esp --version ".." --git-commit abc1234 \
+    --built-at 2026-10-22T08:00:00Z --artifacts-file fixtures/minimal.artifacts
 check_info "err-built-at.out" build --base-dir fixtures --vendor jethome \
     --product tst-firmware-esp --version v1.16 --git-commit abc1234 \
     --built-at "2026-10-22 08:00:00" --artifacts-file fixtures/minimal.artifacts

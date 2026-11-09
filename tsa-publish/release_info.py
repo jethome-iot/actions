@@ -28,7 +28,13 @@ BUILT_AT_RE = re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$')
 # Разрешаем только то, что в URL не требует экранирования: иначе шаг заливки
 # обратился бы не по тому адресу. '/' в query допустим, в пути версии — нет.
 SLUG_RE = re.compile(r'^[A-Za-z0-9._~/-]+$')
-VERSION_RE = re.compile(r'^[A-Za-z0-9._~-]+$')
+
+# В версии дополнительно разрешены '+' и ':': версией бывает ISO-таймштамп
+# (2025-12-23T07:05:42+00:00), и сервер такую версию принимает. В пути URL оба
+# символа легальны (RFC 3986, pchar), и '+' в пути — это плюс, а не пробел;
+# в query-строке он читался бы как пробел, поэтому в SLUG_RE его нет.
+VERSION_RE = re.compile(r'^[A-Za-z0-9._+:~-]+$')
+VERSION_CHARS = 'A-Z a-z 0-9 . _ + : ~ -'
 
 # Размер блока чтения при подсчёте sha256: образы бывают до 1.5 ГБ
 CHUNK_SIZE = 1024 * 1024
@@ -154,7 +160,12 @@ def cmd_build(args):
     if not VERSION_RE.match(args.version):
         raise InputError(
             f'version: has characters that are not URL-safe '
-            f'(allowed: A-Z a-z 0-9 . _ ~ -), got {args.version!r}')
+            f'(allowed: {VERSION_CHARS}), got {args.version!r}')
+    # Версия из одних точек ('.', '..') — это сегмент относительного пути:
+    # запрос ушёл бы не к релизу, а на уровень выше
+    if set(args.version) == {'.'}:
+        raise InputError(
+            f'version: must not consist of dots only, got {args.version!r}')
 
     release = {
         'info_version': INFO_VERSION,

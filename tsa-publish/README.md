@@ -43,7 +43,9 @@ knows nothing about it.
 
 The release version is used as given: the leading `v` of the tag is **not**
 stripped, so the version on the platform matches what the firmware reports
-about itself.
+about itself. Allowed characters are `A-Z a-z 0-9 . _ + : ~ -`, which also
+covers firmware that versions itself with an ISO timestamp
+(`2025-12-23T07:05:42+00:00`).
 
 **Pass `public: 'true'` for a build that is meant to be public.** Without it
 the release counts as an internal build and cannot be published into a public

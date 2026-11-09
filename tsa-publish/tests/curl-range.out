@@ -11,3 +11,7 @@ case -C 100:
   PUT /releases/v1.16/artifact HTTP
   content-range: bytes 100-1023/1024
   content-length: 924
+case ISO version in path:
+  PUT /releases/2025-12-23T07:05:42+00:00/artifact HTTP
+  content-range: (absent)
+  content-length: 1024
