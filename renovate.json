@@ -10,6 +10,9 @@
   ],
   "dependencyDashboard": true,
   "dependencyDashboardTitle": "Renovate: обновления зависимостей",
+  "labels": [
+    "dependencies"
+  ],
   "commitMessagePrefix": "ci:",
   "commitMessageAction": "update",
   "pin": {
