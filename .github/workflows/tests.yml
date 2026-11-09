@@ -14,7 +14,11 @@ permissions:
 jobs:
   test:
     name: ${{ matrix.action }}
-    runs-on: self-hosted
+    # Не просто self-hosted: эту метку несут и раннеры не на linux, доступные
+    # этому репозиторию, а сюиты — bash с mktemp, shasum и локальными
+    # слушателями. Пара меток — та же, что у renovate-workflow здесь и у
+    # workflow соседних репозиториев.
+    runs-on: [self-hosted, ubuntu-latest]
     # Сюиты поднимают локальные слушатели; повисшая проверка не должна
     # держать self-hosted раннер до таймаута задания
     timeout-minutes: 10
