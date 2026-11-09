@@ -1,5 +1,0 @@
-$ release_info.py limit-check --base-dir fixtures --artifacts-file fixtures/minimal.artifacts fixtures/resp-create-smalllimit.json
-=== stderr ===
-eeprom-programmer.factory.bin: 33 bytes exceeds server limit 10 bytes
-error: 1 artifact(s) larger than max_artifact_size 10
-=== exit 2 ===

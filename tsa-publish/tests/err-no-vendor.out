@@ -1,4 +1,0 @@
-$ release_info.py build --base-dir fixtures --vendor  --product tst-firmware-esp --version v1.16 --git-commit abc1234 --built-at 2026-10-22T08:00:00Z --artifacts-file fixtures/minimal.artifacts
-=== stderr ===
-error: vendor: must not be empty
-=== exit 2 ===

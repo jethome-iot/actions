@@ -1,0 +1,4 @@
+$ release_info.py plan --base-dir <tmp> --artifacts-file <tmp>/empty-artifact.artifacts
+=== stderr ===
+error: artifacts line 2: <tmp>/build/empty.bin is empty; the server does not accept an artifact of size 0
+=== exit 2 ===

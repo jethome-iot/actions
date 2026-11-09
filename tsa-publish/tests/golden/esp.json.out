@@ -1,0 +1,81 @@
+$ release_info.py build --base-dir <tmp> --vendor jethome --product tst-firmware-esp --version v1.16 --git-commit abc1234 --built-at 2026-10-22T08:00:00Z --artifacts-file fixtures/esp.artifacts --publish release --public
+{
+    "info_version": 1,
+    "vendor": "jethome",
+    "product": "tst-firmware-esp",
+    "version": "v1.16",
+    "git_commit": "abc1234",
+    "built_at": "2026-10-22T08:00:00Z",
+    "publish": [
+        "release"
+    ],
+    "public": true,
+    "artifacts": [
+        {
+            "streams": [
+                "jxd-r6-e1eth-test-selftest"
+            ],
+            "kind": "factory",
+            "file": "jxd-r6-e1eth-test-selftest.factory.bin",
+            "size": 42,
+            "sha256": "c2d8be1c2564590b8b4fc85fb1abdbf41bfa5764399deee189a3af6f920997d1"
+        },
+        {
+            "streams": [
+                "jxd-r6-e1eth-test-selftest"
+            ],
+            "kind": "ram",
+            "file": "jxd-r6-e1eth-test-selftest-ram.bin",
+            "size": 38,
+            "sha256": "e81244cf49b245838334ab246a5b0adc04fd77353bcbf8faacddf32490fd9624"
+        },
+        {
+            "streams": [
+                "eeprom-programmer"
+            ],
+            "kind": "factory",
+            "file": "eeprom-programmer.factory.bin",
+            "size": 33,
+            "sha256": "d8618a6c494ffd8d4af63a3f90d8857381762a32d68f86111cfa4e5dba0daaf4"
+        },
+        {
+            "streams": [
+                "eeprom-programmer"
+            ],
+            "kind": "ram",
+            "file": "eeprom-programmer-ram.bin",
+            "size": 29,
+            "sha256": "fd5b166c3a0b80d534acae7b4fb76ae6ff83eae053d3ed9f503e8d563d2f5644"
+        },
+        {
+            "streams": [
+                "jxd-pm380-e1eth-powermeter"
+            ],
+            "kind": "factory",
+            "file": "jxd-pm380-e1eth-powermeter.factory.bin",
+            "size": 42,
+            "sha256": "89a4e35bc0f05fa09774331af410eb3c2dcb7f987263e7055624e70b991b12a1"
+        },
+        {
+            "streams": [
+                "jxd-pm380-e1eth-powermeter"
+            ],
+            "kind": "ram",
+            "file": "jxd-pm380-e1eth-powermeter-ram.bin",
+            "size": 38,
+            "sha256": "069b61b51ee59e7b7b7ff59dc0e8921cb35ae72319ef03d165b488556272eb04"
+        },
+        {
+            "streams": [
+                "jxd-r6-e1eth-test-selftest",
+                "eeprom-programmer",
+                "jxd-pm380-e1eth-powermeter"
+            ],
+            "kind": "loader",
+            "file": "ram_load.py",
+            "size": 55,
+            "sha256": "d2849ed44bcf9a42730c2d55e4f347f59b4449f2c36f17959fd1fded120f4e22"
+        }
+    ]
+}
+=== exit 0 ===

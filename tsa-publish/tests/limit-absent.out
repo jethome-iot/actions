@@ -1,3 +1,0 @@
-$ release_info.py limit-check --base-dir fixtures --artifacts-file fixtures/minimal.artifacts fixtures/resp-create-nopublish.json
-max_artifact_size: not reported by server, size check skipped
-=== exit 0 ===

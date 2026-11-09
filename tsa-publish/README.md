@@ -199,7 +199,14 @@ listeners built from stdlib instead of the real server:
   settles, an unreadable body served with `200`, and a file taken in more
   parts than the failure budget.
 
-To regenerate golden files: `UPDATE_GOLDEN=1 bash tsa-publish/tests/test.sh`
-(this rewrites differing files, not only missing ones).
+Expected output lives one file per case in `tests/golden/`. To regenerate:
+`UPDATE_GOLDEN=1 bash tsa-publish/tests/test.sh` (this rewrites differing
+files, not only missing ones).
+
+`test.sh` builds the fake build tree and the short inputs itself in a
+`mktemp -d` and removes them on exit, so the repository carries no stand-in
+firmware images; `tests/fixtures/` holds only the inputs longer than three
+lines, which read better as files. The temporary path is masked as `<tmp>` in
+golden files so it does not depend on `mktemp`.
 
 Publishing itself is not covered: it needs the server and a key.

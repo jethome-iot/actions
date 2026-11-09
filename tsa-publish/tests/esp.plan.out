@@ -1,9 +1,0 @@
-$ release_info.py plan --base-dir fixtures --artifacts-file fixtures/esp.artifacts
-jxd-r6-e1eth-test-selftest	factory	fixtures/build/jxd-r6-e1eth-test-selftest.factory.bin	jxd-r6-e1eth-test-selftest.factory.bin	42
-jxd-r6-e1eth-test-selftest	ram	fixtures/build/jxd-r6-e1eth-test-selftest-ram.bin	jxd-r6-e1eth-test-selftest-ram.bin	38
-eeprom-programmer	factory	fixtures/build/eeprom-programmer.factory.bin	eeprom-programmer.factory.bin	33
-eeprom-programmer	ram	fixtures/build/eeprom-programmer-ram.bin	eeprom-programmer-ram.bin	29
-jxd-pm380-e1eth-powermeter	factory	fixtures/build/jxd-pm380-e1eth-powermeter.factory.bin	jxd-pm380-e1eth-powermeter.factory.bin	42
-jxd-pm380-e1eth-powermeter	ram	fixtures/build/jxd-pm380-e1eth-powermeter-ram.bin	jxd-pm380-e1eth-powermeter-ram.bin	38
-jxd-r6-e1eth-test-selftest	loader	fixtures/tools/ram_load.py	ram_load.py	55
-=== exit 0 ===

@@ -1,0 +1,21 @@
+$ release_info.py build --base-dir <tmp> --vendor jethome --product tst-firmware-mcu --version 2025-12-23T07:05:42+00:00 --git-commit abc1234 --built-at 2026-10-22T08:00:00Z --artifacts-file <tmp>/minimal.artifacts
+{
+    "info_version": 1,
+    "vendor": "jethome",
+    "product": "tst-firmware-mcu",
+    "version": "2025-12-23T07:05:42+00:00",
+    "git_commit": "abc1234",
+    "built_at": "2026-10-22T08:00:00Z",
+    "artifacts": [
+        {
+            "streams": [
+                "eeprom-programmer"
+            ],
+            "kind": "factory",
+            "file": "eeprom-programmer.factory.bin",
+            "size": 33,
+            "sha256": "d8618a6c494ffd8d4af63a3f90d8857381762a32d68f86111cfa4e5dba0daaf4"
+        }
+    ]
+}
+=== exit 0 ===

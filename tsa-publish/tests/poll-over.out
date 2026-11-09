@@ -1,3 +1,0 @@
-$ release_info.py poll-state fixtures/resp-artifact-over.json --size 65536
-wait 70000 uploading
-=== exit 0 ===

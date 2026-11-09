@@ -1,0 +1,3 @@
+$ release_info.py poll-state <tmp>/resp-artifact-published.json --size 4096
+skip 4096 published
+=== exit 0 ===

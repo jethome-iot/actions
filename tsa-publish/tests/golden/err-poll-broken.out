@@ -1,0 +1,4 @@
+$ release_info.py poll-state <tmp>/resp-broken.html --size 1
+=== stderr ===
+error: cannot parse server response: Expecting value: line 1 column 1 (char 0)
+=== exit 2 ===
