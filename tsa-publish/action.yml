@@ -1,0 +1,313 @@
+name: 'Publish release to tsa'
+description: 'Publish a firmware release to the JetHome tsa update server (update platform v2)'
+inputs:
+  url:
+    required: false
+    description: 'Base URL of the tsa server'
+    default: 'https://tsa.jethome.com'
+  vendor:
+    required: false
+    description: 'Vendor slug'
+    default: 'jethome'
+  product:
+    required: true
+    description: 'Product slug. The CI API key is issued per product.'
+  version:
+    required: true
+    description: 'Release version, e.g. the whole release tag (v1.16). Leading "v" is kept as is.'
+  artifacts:
+    required: true
+    description: |
+      Artifact list, one per line: "streams,comma,separated  kind  path  [audience]".
+      Empty lines and lines starting with "#" are ignored.
+  api_key:
+    required: true
+    description: 'CI API key of the product, sent as the X-API-Key header. Never put it in a command line.'
+  built_at:
+    required: false
+    description: 'Build time, RFC 3339 in UTC. If not specified, the commit time of the tag is used.'
+    default: ''
+  git_commit:
+    required: false
+    description: 'Source commit. If not specified, the short SHA of the current commit is used.'
+    default: ''
+  publish:
+    required: false
+    description: 'Autopublish channels, space separated. Empty means the release stays unpublished.'
+    default: ''
+  public:
+    required: false
+    description: 'Set to "true" for a public build. Empty means an internal build.'
+    default: ''
+  retry_delay:
+    required: false
+    description: 'Pause in seconds between artifact upload retries'
+    default: '10'
+
+outputs:
+  version:
+    description: "published release version"
+    value: ${{ steps.verify-release.outputs.version }}
+  artifacts_accepted:
+    description: "number of accepted artifacts"
+    value: ${{ steps.upload-artifacts.outputs.accepted }}
+  release:
+    description: "final release JSON as reported by the server"
+    value: ${{ steps.verify-release.outputs.release }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Build release-info.json
+      id: prepare
+      shell: bash
+      env:
+        TSA_ACTION_PATH: ${{ github.action_path }}
+        TSA_API_KEY: ${{ inputs.api_key }}
+        TSA_URL: ${{ inputs.url }}
+        TSA_VENDOR: ${{ inputs.vendor }}
+        TSA_PRODUCT: ${{ inputs.product }}
+        TSA_VERSION: ${{ inputs.version }}
+        TSA_ARTIFACTS: ${{ inputs.artifacts }}
+        TSA_BUILT_AT: ${{ inputs.built_at }}
+        TSA_GIT_COMMIT: ${{ inputs.git_commit }}
+        TSA_PUBLISH: ${{ inputs.publish }}
+        TSA_PUBLIC: ${{ inputs.public }}
+        TSA_RETRY_DELAY: ${{ inputs.retry_delay }}
+      run: |
+        set -euo pipefail
+
+        # Ключ с переводом строки проверяем ДО ::add-mask::: маска действует
+        # построчно, поэтому хвост после '\n' напечатался бы в лог открытым
+        # текстом. В конфиге curl тот же хвост стал бы отдельной директивой
+        # ('user = …' и прочее), молча подменив опции запроса
+        case "${TSA_API_KEY}" in
+          *$'\n'*|*$'\r'*)
+            echo "error: api_key contains a newline; pass the key as a single line"
+            exit 1
+            ;;
+        esac
+        if [ -z "${TSA_API_KEY}" ]; then
+          echo "error: api_key is empty"
+          exit 1
+        fi
+
+        # Маскируем ключ в логах раннера: дальше он живёт только в env и в
+        # curl-конфиге с правами 0600, в командную строку не попадает никогда
+        echo "::add-mask::${TSA_API_KEY}"
+
+        # Ключ продукта нельзя отправлять по открытому каналу. Опечатка в
+        # схеме входа url иначе утекла бы молча
+        case "${TSA_URL}" in
+          https://*) ;;
+          *)
+            echo "error: url must use https, got '${TSA_URL}'"
+            exit 1
+            ;;
+        esac
+        if ! [[ "${TSA_RETRY_DELAY}" =~ ^[0-9]+$ ]]; then
+          echo "error: retry_delay must be a whole number of seconds, got '${TSA_RETRY_DELAY}'"
+          exit 1
+        fi
+
+        # Рабочий каталог шага: release-info.json и план заливки, без секретов
+        RUN_DIR="$(mktemp -d "${RUNNER_TEMP:-/tmp}/tsa-publish-XXXXXX")"
+        echo "run_dir=${RUN_DIR}" >> "${GITHUB_OUTPUT}"
+        BASE_URL="${TSA_URL}"
+        while [ "${BASE_URL%/}" != "${BASE_URL}" ]; do
+          BASE_URL="${BASE_URL%/}"
+        done
+        echo "base=${BASE_URL}/${TSA_VENDOR}/${TSA_PRODUCT}/api/v1" >> "${GITHUB_OUTPUT}"
+
+        # git_commit: короткий SHA текущего коммита
+        if [ -n "${TSA_GIT_COMMIT}" ]; then
+          GIT_COMMIT="${TSA_GIT_COMMIT}"
+        elif GIT_COMMIT="$(git rev-parse --short=7 HEAD 2>/dev/null)"; then
+          :
+        else
+          SHA="${GITHUB_SHA:-}"
+          GIT_COMMIT="${SHA:0:7}"
+        fi
+        if [ -z "${GIT_COMMIT}" ]; then
+          echo "error: cannot determine git_commit, pass it explicitly"
+          exit 1
+        fi
+
+        # built_at: время коммита тега, приведённое к UTC
+        if [ -n "${TSA_BUILT_AT}" ]; then
+          BUILT_AT="${TSA_BUILT_AT}"
+        elif BUILT_AT="$(TZ=UTC0 git show -s --format=%cd \
+              --date=format-local:%Y-%m-%dT%H:%M:%SZ HEAD 2>/dev/null)" \
+             && [ -n "${BUILT_AT}" ]; then
+          echo "built_at taken from the commit time of ${GIT_COMMIT}"
+        else
+          BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          echo "built_at: no git history available, using current time"
+        fi
+
+        printf '%s\n' "${TSA_ARTIFACTS}" > "${RUN_DIR}/artifacts.txt"
+
+        # Сборка тела релиза: size и sha256 считаются по файлам здесь,
+        # заодно проверяется формат входа artifacts
+        BUILD_ARGS=(build
+            --vendor "${TSA_VENDOR}"
+            --product "${TSA_PRODUCT}"
+            --version "${TSA_VERSION}"
+            --git-commit "${GIT_COMMIT}"
+            --built-at "${BUILT_AT}"
+            --publish "${TSA_PUBLISH}"
+            --artifacts-file "${RUN_DIR}/artifacts.txt")
+        if [ "${TSA_PUBLIC}" = "true" ]; then
+          BUILD_ARGS+=(--public)
+        elif [ -n "${TSA_PUBLIC}" ]; then
+          echo "error: public must be 'true' or empty, got '${TSA_PUBLIC}'"
+          exit 1
+        fi
+
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" "${BUILD_ARGS[@]}" \
+            > "${RUN_DIR}/release-info.json"
+
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" plan \
+            --artifacts-file "${RUN_DIR}/artifacts.txt" \
+            > "${RUN_DIR}/plan.tsv"
+
+        echo "=== release-info.json ==="
+        cat "${RUN_DIR}/release-info.json"
+        echo "=== $(wc -l < "${RUN_DIR}/plan.tsv" | tr -d ' ') artifact(s) to publish ==="
+
+    - name: Create release
+      id: create-release
+      shell: bash
+      env:
+        TSA_ACTION_PATH: ${{ github.action_path }}
+        TSA_API_KEY: ${{ inputs.api_key }}
+        TSA_BASE: ${{ steps.prepare.outputs.base }}
+        TSA_RUN_DIR: ${{ steps.prepare.outputs.run_dir }}
+        TSA_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        echo "::add-mask::${TSA_API_KEY}"
+
+        # Ключ отдаём curl только файлом-конфигом с правами 0600: на
+        # self-hosted раннере список процессов виден всем
+        # shellcheck source=tsa-publish/curl_api_config.sh
+        source "${TSA_ACTION_PATH}/curl_api_config.sh"
+        CURL_CFG="${TSA_RUN_DIR}/curl.cfg"
+        trap 'rm -f "${CURL_CFG}"' EXIT
+        write_api_config "${CURL_CFG}"
+
+        # Без таймаутов полуоткрытое соединение висит до таймаута задания
+        BODY="${TSA_RUN_DIR}/create-response.json"
+        : > "${BODY}"
+        CODE="$(curl --config "${CURL_CFG}" -sS --no-progress-meter \
+            --connect-timeout 30 --max-time 120 \
+            -o "${BODY}" -w '%{http_code}' \
+            -H 'Content-Type: application/json' \
+            --data-binary "@${TSA_RUN_DIR}/release-info.json" \
+            "${TSA_BASE}/releases")" || CODE="000"
+
+        case "${CODE}" in
+          201)
+            echo "release ${TSA_VERSION}: created"
+            ;;
+          200)
+            # Повторный запуск с тем же содержимым — штатный случай
+            echo "release ${TSA_VERSION}: already exists with the same content, continuing"
+            ;;
+          409)
+            echo "error: release ${TSA_VERSION} is already published with different files."
+            echo "Contents of a released version cannot be replaced, a new version is required."
+            cat "${BODY}" || true
+            exit 1
+            ;;
+          *)
+            echo "error: POST ${TSA_BASE}/releases returned HTTP ${CODE}"
+            cat "${BODY}" || true
+            exit 1
+            ;;
+        esac
+
+        # Решение сервера по каналам автопубликации. approval — не ошибка:
+        # публичные каналы продукта штатно публикуются администратором
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" publish-summary "${BODY}"
+
+        # Лимит на размер артефакта сервер сообщает здесь — проверяем до
+        # заливки, чтобы не упасть на середине гигабайта
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" limit-check \
+            --artifacts-file "${TSA_RUN_DIR}/artifacts.txt" "${BODY}"
+
+    - name: Upload artifacts
+      id: upload-artifacts
+      shell: bash
+      env:
+        TSA_ACTION_PATH: ${{ github.action_path }}
+        TSA_API_KEY: ${{ inputs.api_key }}
+        TSA_BASE: ${{ steps.prepare.outputs.base }}
+        TSA_RUN_DIR: ${{ steps.prepare.outputs.run_dir }}
+        TSA_VERSION: ${{ inputs.version }}
+        TSA_RETRY_DELAY: ${{ inputs.retry_delay }}
+      run: |
+        set -euo pipefail
+        echo "::add-mask::${TSA_API_KEY}"
+
+        # shellcheck source=tsa-publish/curl_api_config.sh
+        source "${TSA_ACTION_PATH}/curl_api_config.sh"
+        CURL_CFG="${TSA_RUN_DIR}/curl.cfg"
+        trap 'rm -f "${CURL_CFG}"' EXIT
+        write_api_config "${CURL_CFG}"
+
+        # Цикл заливки вынесен в скрипт: он покрыт тестом против заглушки
+        # сервера, встроенный в action.yml покрыть было нечем
+        export TSA_HELPER="${TSA_ACTION_PATH}/release_info.py"
+        export TSA_CURL_CFG="${CURL_CFG}"
+        bash "${TSA_ACTION_PATH}/upload_artifacts.sh" "${TSA_RUN_DIR}/plan.tsv"
+
+        echo "accepted=$(cat "${TSA_RUN_DIR}/accepted")" >> "${GITHUB_OUTPUT}"
+
+    - name: Verify release is complete
+      id: verify-release
+      shell: bash
+      env:
+        TSA_ACTION_PATH: ${{ github.action_path }}
+        TSA_API_KEY: ${{ inputs.api_key }}
+        TSA_BASE: ${{ steps.prepare.outputs.base }}
+        TSA_RUN_DIR: ${{ steps.prepare.outputs.run_dir }}
+        TSA_VERSION: ${{ inputs.version }}
+      run: |
+        set -euo pipefail
+        echo "::add-mask::${TSA_API_KEY}"
+
+        # shellcheck source=tsa-publish/curl_api_config.sh
+        source "${TSA_ACTION_PATH}/curl_api_config.sh"
+        CURL_CFG="${TSA_RUN_DIR}/curl.cfg"
+        trap 'rm -f "${CURL_CFG}"' EXIT
+        write_api_config "${CURL_CFG}"
+
+        BODY="${TSA_RUN_DIR}/release.json"
+        : > "${BODY}"
+        CODE="$(curl --config "${CURL_CFG}" -sS --no-progress-meter \
+            --connect-timeout 30 --max-time 120 \
+            -o "${BODY}" -w '%{http_code}' \
+            "${TSA_BASE}/releases/${TSA_VERSION}")" || CODE="000"
+        if [ "${CODE}" != "200" ]; then
+          echo "error: GET ${TSA_BASE}/releases/${TSA_VERSION} returned HTTP ${CODE}"
+          cat "${BODY}" || true
+          exit 1
+        fi
+
+        echo "=== release ${TSA_VERSION} ==="
+        cat "${BODY}"
+        echo
+
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" publish-summary "${BODY}"
+        # Релиз собран, когда каждый артефакт в статусе uploaded или published;
+        # иначе шаг падает
+        python3 -I "${TSA_ACTION_PATH}/release_info.py" verify "${BODY}"
+
+        DELIM="TSA_RELEASE_EOF_${RANDOM}${RANDOM}"
+        {
+          echo "version=${TSA_VERSION}"
+          printf 'release<<%s\n' "${DELIM}"
+          printf '%s\n' "$(cat "${BODY}")"
+          printf '%s\n' "${DELIM}"
+        } >> "${GITHUB_OUTPUT}"

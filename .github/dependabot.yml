@@ -12,6 +12,7 @@ updates:
       - "/firmware-upload"
       - "/repo-upload"
       - "/repo-upload-json"
+      - "/tsa-publish"
     schedule:
       interval: "weekly"
     groups:

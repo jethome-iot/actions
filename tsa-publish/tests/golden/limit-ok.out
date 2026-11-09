@@ -1,0 +1,3 @@
+$ release_info.py limit-check --base-dir <tmp> --artifacts-file fixtures/esp.artifacts fixtures/resp-create-auto.json
+max_artifact_size: 2147483648 bytes, all artifacts fit
+=== exit 0 ===

@@ -1,0 +1,3 @@
+$ release_info.py poll-state <tmp>/resp-artifact-uploading.json --size 131072
+send 65536 uploading
+=== exit 0 ===

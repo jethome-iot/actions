@@ -1,0 +1,4 @@
+config mode: 0600
+config line: header = "X-API-Key: k\"ey\\with$pecial #hash and=equals"
+delivered X-API-Key: k"ey\with$pecial #hash and=equals
+key survived escaping: yes

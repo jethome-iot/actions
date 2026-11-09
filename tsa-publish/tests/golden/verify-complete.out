@@ -1,0 +1,5 @@
+$ release_info.py verify fixtures/resp-release-complete.json
+  uploaded   jxd-r6-e1eth-test-selftest/factory               262144/262144
+  published  jxd-r6-e1eth-test-selftest/loader                4096/4096
+release v1.16: complete, all 2 artifact(s) accepted
+=== exit 0 ===

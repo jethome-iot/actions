@@ -1,0 +1,4 @@
+$ release_info.py publish-summary fixtures/resp-create-auto.json
+publish channel 'internal/nightly': auto — server publishes it once all artifacts are accepted
+publish channel 'release': approval — waits for administrator confirmation
+=== exit 0 ===

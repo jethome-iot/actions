@@ -1,0 +1,21 @@
+--- firmware.factory.bin (stream board-selftest, kind factory, 63 bytes)
+  status pending, 0 byte(s) on the server, sending from there
+  part accepted, continuing
+  status uploading, 8 byte(s) on the server, sending from there
+  part accepted, continuing
+  status uploading, 16 byte(s) on the server, sending from there
+  part accepted, continuing
+  status uploading, 24 byte(s) on the server, sending from there
+  part accepted, continuing
+  status uploading, 32 byte(s) on the server, sending from there
+  part accepted, continuing
+  status uploading, 40 byte(s) on the server, sending from there
+  part accepted, continuing
+  status uploading, 48 byte(s) on the server, sending from there
+  part accepted, continuing
+  status uploading, 56 byte(s) on the server, sending from there
+  accepted in full, sha256 confirmed by the server
+1 artifact(s) accepted
+exit: 0
+accepted file: 1
+server saw: 8 poll(s), 8 PUT(s), status uploaded, received 63

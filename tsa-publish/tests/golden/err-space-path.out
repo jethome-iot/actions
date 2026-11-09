@@ -1,0 +1,4 @@
+$ release_info.py build --base-dir <tmp> --vendor jethome --product tst-firmware-esp --version v1.16 --git-commit abc1234 --built-at 2026-10-22T08:00:00Z --artifacts-file <tmp>/space-path.artifacts
+=== stderr ===
+error: artifacts line 1: no such file: <tmp>/build/my (line parsed as kind 'factory', path 'build/my', audience 'file.bin' — a path cannot contain spaces)
+=== exit 2 ===

@@ -1,0 +1,3 @@
+$ release_info.py publish-summary fixtures/resp-create-nopublish.json
+publish: not requested, release stays unpublished
+=== exit 0 ===

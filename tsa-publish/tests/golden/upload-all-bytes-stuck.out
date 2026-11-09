@@ -1,0 +1,12 @@
+--- firmware.factory.bin (stream board-selftest, kind factory, 63 bytes)
+  server holds all 63 byte(s), waiting for it to settle (status uploading)
+  server holds all 63 byte(s), waiting for it to settle (status uploading)
+  server holds all 63 byte(s), waiting for it to settle (status uploading)
+  server holds all 63 byte(s), waiting for it to settle (status uploading)
+  server holds all 63 byte(s), waiting for it to settle (status uploading)
+  server holds all 63 byte(s), waiting for it to settle (status uploading)
+error: the server holds all 63 byte(s) of firmware.factory.bin but has not
+accepted the artifact after 5 checks. Its status stayed 'uploading'.
+exit: 1
+accepted file: absent
+server saw: 6 poll(s), 0 PUT(s), status uploading, received 63
