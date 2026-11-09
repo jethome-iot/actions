@@ -51,6 +51,8 @@ class Scenario:
         # «все байты на сервере» — сервер досчитывает sha256
         self.settle_after = 0
         self.settled_polls = 0
+        # Отвечать на опрос 404: релиз или артефакт серверу неизвестен
+        self.unknown = False
 
     @classmethod
     def build(cls, name):
@@ -73,6 +75,9 @@ class Scenario:
             s.status, s.received, s.settle_after = 'uploading', size, 99
         elif name == 'broken-poll-body':
             s.broken_polls = 2
+        elif name == 'artifact-unknown':
+            # POST /releases не проходил: повторять опрос бессмысленно
+            s.unknown = True
         elif name == 'many-parts':
             # Принимает по 8 байт за PUT: частей больше, чем бюджет неудач
             s.chunk = 8
@@ -98,6 +103,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         s = self.scenario
         s.polls += 1
+        if s.unknown:
+            self._json(404, {'error': 'release or artifact not found'})
+            return
         if s.broken_polls > 0:
             s.broken_polls -= 1
             # Страница ошибки от прокси, отданная с кодом 200

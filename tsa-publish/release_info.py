@@ -150,8 +150,15 @@ def read_artifacts_text(args):
 
 
 def require_file(path, artifact):
-    """Проверить, что файл артефакта на месте, и объяснить разбор строки."""
+    """Проверить, что файл артефакта на месте и не пуст, объяснить разбор строки."""
     if os.path.isfile(path):
+        # Сервер отвергает нулевой размер при создании релиза
+        # ('size must be greater than zero'). Падаем здесь, до сети: иначе
+        # причина выяснилась бы кодом 400 на шаге создания релиза
+        if os.path.getsize(path) == 0:
+            raise InputError(
+                f'artifacts line {artifact["lineno"]}: {path} is empty; '
+                f'the server does not accept an artifact of size 0')
         return
     # Поля строки разделены пробелами, поэтому путь с пробелом разбирается
     # как путь + audience. Без подсказки пользователь видит в ошибке путь,
@@ -279,7 +286,10 @@ def cmd_poll_state(args):
         action = 'skip'
     elif received > 0 and received >= args.size:
         # curl -T с -C >= размера файла выходит с кодом 18, не послав ни
-        # байта: досылать нечего, надо перечитать состояние
+        # байта: досылать нечего, надо перечитать состояние.
+        # Условие received > 0 здесь — страховка: артефакт нулевого размера
+        # отвергается ещё в build, потому что его не принимает сервер, но
+        # poll-state вызывается и самостоятельно и не должен это предполагать
         action = 'wait'
     else:
         action = 'send'

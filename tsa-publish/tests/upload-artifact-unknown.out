@@ -1,0 +1,9 @@
+--- firmware.factory.bin (stream board-selftest, kind factory, 63 bytes)
+error: the server does not know release v1.16, or an artifact
+with stream 'board-selftest' and kind 'factory' in it. Retrying cannot fix this:
+the release has to be created by POST /releases before artifacts are sent,
+and the version must be the same in both steps.
+{"error": "release or artifact not found"}
+exit: 1
+accepted file: absent
+server saw: 1 poll(s), 0 PUT(s), status pending, received 0

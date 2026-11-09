@@ -67,6 +67,17 @@ while IFS=$'\t' read -r STREAM KIND ARTIFACT_PATH FILE SIZE <&3; do
         blank_body
         CODE="$(curl "${CURL_POLL[@]}" -o "${BODY}" -w '%{http_code}' \
             "${ART_URL}")" || CODE="000"
+        # 404 означает «релиз или артефакт серверу неизвестен» — повтор это
+        # не лечит никогда, а с дефолтной задержкой сжёг бы весь бюджет и
+        # оставил в логе неверный диагноз
+        if [ "${CODE}" = "404" ]; then
+            echo "error: the server does not know release ${TSA_VERSION}, or an artifact"
+            echo "with stream '${STREAM}' and kind '${KIND}' in it. Retrying cannot fix this:"
+            echo "the release has to be created by POST /releases before artifacts are sent,"
+            echo "and the version must be the same in both steps."
+            cat "${BODY}" || true
+            exit 1
+        fi
         if [ "${CODE}" != "200" ]; then
             echo "  artifact status request returned HTTP ${CODE}"
             cat "${BODY}" || true

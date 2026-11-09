@@ -80,6 +80,9 @@ streams,comma,separated  kind  path  [audience]
   line would be read as a path plus an `audience`.
 * `audience` — optional. `internal` keeps the file out of the public tree.
 
+An empty file cannot be an artifact: the server rejects a release declaring
+`size` 0, so such a line fails before anything is sent.
+
 Empty lines and lines starting with `#` are ignored. A `(stream, kind)` pair
 must be unique: the upload step addresses artifacts by it.
 
@@ -144,6 +147,10 @@ jobs:
    the artifact yet, no `PUT` is made at all: `curl -T … -C <offset>` with an
    offset at or past the file size exits with code 18 without sending
    anything, so the loop waits for the server to settle instead.
+
+   A `404` on the status request fails the step at once instead of spending
+   the budget: it means the server knows neither this release version nor an
+   artifact with this `(stream, kind)`, which no retry can change.
 4. **verify-release** — `GET {base}/releases/{version}`, print it and fail
    unless every artifact is `uploaded` or `published`.
 
@@ -181,15 +188,16 @@ golden files and parsing of server responses. Three groups run against stub
 listeners built from stdlib instead of the real server:
 
 - the `Content-Range` that `curl -T … -C <offset>` actually sends, and that it
-  sends none at offset 0, which is why the upload step needs no special case
-  for an empty artifact;
+  sends none at offset 0, which is why a first, full upload needs no special
+  case in the upload step;
 - that the API key survives escaping into the `curl` config and arrives in the
   `X-API-Key` header unchanged;
 - `upload_artifacts.sh` itself against a stub that replays the intake
   protocol: a fresh upload, a resume from a partial offset, an already
-  accepted artifact, a `422` rejection, the server holding every byte before
-  accepting, a release that never settles, an unreadable body served with
-  `200`, and a file taken in more parts than the failure budget.
+  accepted artifact, a `422` rejection, an unregistered release answering
+  `404`, the server holding every byte before accepting, a release that never
+  settles, an unreadable body served with `200`, and a file taken in more
+  parts than the failure budget.
 
 To regenerate golden files: `UPDATE_GOLDEN=1 bash tsa-publish/tests/test.sh`
 (this rewrites differing files, not only missing ones).

@@ -122,11 +122,6 @@ check_info "audience.json.out" build "${COMMON[@]}" \
 # минимум: один артефакт, без publish и public — внутренняя сборка
 check_info "minimal.json.out" build "${COMMON[@]}" \
     --artifacts-file fixtures/minimal.artifacts
-# нулевой артефакт: sha256 пустого файла и size 0 должны быть объявлены как есть
-check_info "empty-artifact.json.out" build "${COMMON[@]}" \
-    --artifacts-file fixtures/empty-artifact.artifacts
-check_info "empty-artifact.plan.out" plan --base-dir fixtures \
-    --artifacts-file fixtures/empty-artifact.artifacts
 
 # --- ошибки во входных данных ------------------------------------------------
 
@@ -140,6 +135,12 @@ check_info "err-dup-stream.out" build "${COMMON[@]}" \
     --artifacts-file fixtures/dup-stream.artifacts
 check_info "err-empty.out" build "${COMMON[@]}" \
     --artifacts-file fixtures/empty.artifacts
+# нулевой артефакт сервер не принимает ('size must be greater than zero'),
+# поэтому отвергаем до сети — и в build, и в plan
+check_info "err-empty-artifact.out" build "${COMMON[@]}" \
+    --artifacts-file fixtures/empty-artifact.artifacts
+check_info "err-empty-artifact-plan.out" plan --base-dir fixtures \
+    --artifacts-file fixtures/empty-artifact.artifacts
 # путь с пробелом неотличим от пути + audience: ошибка должна объяснять разбор
 check_info "err-space-path.out" build "${COMMON[@]}" \
     --artifacts-file fixtures/space-path.artifacts
@@ -222,6 +223,7 @@ for SCENARIO in \
     resume \
     already-uploaded \
     rejected-422 \
+    artifact-unknown \
     all-bytes-not-settled \
     all-bytes-stuck \
     broken-poll-body \
