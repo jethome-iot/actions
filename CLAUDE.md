@@ -11,6 +11,7 @@ Collection of GitHub composite actions for JetHome firmware and package manageme
 | Action | Purpose |
 |--------|---------|
 | `firmware-upload/` | Parse fullslug → generate JSON hierarchy → upload firmware to fw.jethome.com |
+| `tsa-publish/` | Publish a release to the tsa update server (platform v2): create release → upload artifacts with resume → verify |
 | `repo-upload/` | Upload .deb packages to repo via SSH/rsync |
 | `repo-upload-json/` | Upload .deb packages using JSON config (debs-to-repo-info.json) |
 | `armbian-version/` | Extract Armbian version from stable/nightly.json |
