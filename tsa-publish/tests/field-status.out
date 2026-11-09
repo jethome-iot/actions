@@ -1,0 +1,3 @@
+$ release_info.py field fixtures/resp-artifact-uploading.json status
+uploading
+=== exit 0 ===

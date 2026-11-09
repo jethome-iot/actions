@@ -1,0 +1,3 @@
+# четвёртое поле — audience: такой файл не попадает в публичное дерево
+jxd-r6-e1eth-test-selftest  factory  build/jxd-r6-e1eth-test-selftest.factory.bin
+jxd-r6-e1eth-test-selftest  debuglog  build/selftest-debug.log  internal

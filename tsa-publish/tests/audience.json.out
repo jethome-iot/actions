@@ -1,0 +1,35 @@
+$ release_info.py build --base-dir fixtures --vendor jethome --product tst-firmware-esp --version v1.16 --git-commit abc1234 --built-at 2026-10-22T08:00:00Z --artifacts-file fixtures/audience.artifacts --publish internal/nightly release
+{
+    "info_version": 1,
+    "vendor": "jethome",
+    "product": "tst-firmware-esp",
+    "version": "v1.16",
+    "git_commit": "abc1234",
+    "built_at": "2026-10-22T08:00:00Z",
+    "publish": [
+        "internal/nightly",
+        "release"
+    ],
+    "artifacts": [
+        {
+            "streams": [
+                "jxd-r6-e1eth-test-selftest"
+            ],
+            "kind": "factory",
+            "file": "jxd-r6-e1eth-test-selftest.factory.bin",
+            "size": 42,
+            "sha256": "c2d8be1c2564590b8b4fc85fb1abdbf41bfa5764399deee189a3af6f920997d1"
+        },
+        {
+            "streams": [
+                "jxd-r6-e1eth-test-selftest"
+            ],
+            "kind": "debuglog",
+            "file": "selftest-debug.log",
+            "size": 22,
+            "sha256": "632dcb6daf236b10dacfd9a940a47e5bad04255aecd65db08a092de32103776c",
+            "audience": "internal"
+        }
+    ]
+}
+=== exit 0 ===

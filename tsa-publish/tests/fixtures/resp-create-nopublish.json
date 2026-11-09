@@ -1,0 +1,8 @@
+{
+    "vendor": "jethome",
+    "product": "tst-firmware-esp",
+    "version": "v1.16",
+    "artifacts": [
+        {"streams": ["eeprom-programmer"], "kind": "factory", "status": "pending", "size": 33, "received": 0}
+    ]
+}

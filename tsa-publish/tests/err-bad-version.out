@@ -1,0 +1,4 @@
+$ release_info.py build --base-dir fixtures --vendor jethome --product tst-firmware-esp --version v1.16/../v1.15 --git-commit abc1234 --built-at 2026-10-22T08:00:00Z --artifacts-file fixtures/minimal.artifacts
+=== stderr ===
+error: version: has characters that are not URL-safe (allowed: A-Z a-z 0-9 . _ ~ -), got 'v1.16/../v1.15'
+=== exit 2 ===

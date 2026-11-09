@@ -1,0 +1,2 @@
+eeprom-programmer  factory  build/eeprom-programmer.factory.bin
+eeprom-programmer  ram  build/does-not-exist.bin

@@ -1,0 +1,3 @@
+$ release_info.py field fixtures/resp-artifact-published.json status
+published
+=== exit 0 ===

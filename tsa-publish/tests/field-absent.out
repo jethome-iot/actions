@@ -1,0 +1,3 @@
+$ release_info.py field fixtures/resp-create-nopublish.json publish --default none
+none
+=== exit 0 ===

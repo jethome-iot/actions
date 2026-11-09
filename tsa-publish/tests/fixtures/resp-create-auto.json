@@ -1,0 +1,11 @@
+{
+    "vendor": "jethome",
+    "product": "tst-firmware-esp",
+    "version": "v1.16",
+    "built_at": "2026-10-22T08:00:00Z",
+    "max_artifact_size": 2147483648,
+    "artifacts": [
+        {"streams": ["eeprom-programmer"], "kind": "factory", "status": "pending", "size": 33, "received": 0}
+    ],
+    "publish": {"internal/nightly": "auto", "release": "approval"}
+}

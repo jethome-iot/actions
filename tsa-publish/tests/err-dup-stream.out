@@ -1,0 +1,4 @@
+$ release_info.py build --base-dir fixtures --vendor jethome --product tst-firmware-esp --version v1.16 --git-commit abc1234 --built-at 2026-10-22T08:00:00Z --artifacts-file fixtures/dup-stream.artifacts
+=== stderr ===
+error: artifacts line 1: duplicate stream in 'eeprom-programmer,eeprom-programmer'
+=== exit 2 ===

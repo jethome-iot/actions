@@ -1,0 +1,9 @@
+# матрица прошивок ESP32: на каждую плату factory- и ram-образ,
+# общий загрузчик ram_load.py идёт во все потоки с ram-образом
+jxd-r6-e1eth-test-selftest  factory  build/jxd-r6-e1eth-test-selftest.factory.bin
+jxd-r6-e1eth-test-selftest  ram  build/jxd-r6-e1eth-test-selftest-ram.bin
+eeprom-programmer  factory  build/eeprom-programmer.factory.bin
+eeprom-programmer  ram  build/eeprom-programmer-ram.bin
+jxd-pm380-e1eth-powermeter  factory  build/jxd-pm380-e1eth-powermeter.factory.bin
+jxd-pm380-e1eth-powermeter  ram  build/jxd-pm380-e1eth-powermeter-ram.bin
+jxd-r6-e1eth-test-selftest,eeprom-programmer,jxd-pm380-e1eth-powermeter  loader  tools/ram_load.py

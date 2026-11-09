@@ -1,0 +1,3 @@
+# один и тот же (stream, kind) дважды — шаг заливки не различит артефакты
+eeprom-programmer,jxd-r6-e1eth-test-selftest  loader  tools/ram_load.py
+jxd-r6-e1eth-test-selftest  loader  build/eeprom-programmer-ram.bin

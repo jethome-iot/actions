@@ -1,0 +1,10 @@
+{
+    "vendor": "jethome",
+    "product": "tst-firmware-esp",
+    "version": "v1.16",
+    "artifacts": [
+        {"streams": ["jxd-r6-e1eth-test-selftest"], "kind": "factory", "status": "uploaded", "size": 262144, "received": 262144},
+        {"streams": ["jxd-r6-e1eth-test-selftest"], "kind": "ram", "status": "uploading", "size": 131072, "received": 65536},
+        {"streams": ["eeprom-programmer"], "kind": "ram", "status": "pending", "size": 131072, "received": 0}
+    ]
+}

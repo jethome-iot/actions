@@ -1,0 +1,9 @@
+$ release_info.py verify fixtures/resp-release-incomplete.json
+  uploaded   jxd-r6-e1eth-test-selftest/factory               262144/262144
+  uploading  jxd-r6-e1eth-test-selftest/ram                   65536/131072
+  pending    eeprom-programmer/ram                            0/131072
+=== stderr ===
+release v1.16: incomplete, 2 of 3 artifact(s) not accepted
+  jxd-r6-e1eth-test-selftest/ram: uploading
+  eeprom-programmer/ram: pending
+=== exit 1 ===

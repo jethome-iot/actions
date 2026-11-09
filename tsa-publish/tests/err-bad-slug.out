@@ -1,0 +1,4 @@
+$ release_info.py build --base-dir fixtures --vendor jethome --product tst-firmware-esp --version v1.16 --git-commit abc1234 --built-at 2026-10-22T08:00:00Z --artifacts-file fixtures/bad-slug.artifacts
+=== stderr ===
+error: artifacts line 1: kind 'factory?raw' has characters that are not URL-safe (allowed: A-Z a-z 0-9 . _ ~ - /)
+=== exit 2 ===

@@ -1,0 +1,4 @@
+$ release_info.py build --base-dir fixtures --vendor jethome --product tst-firmware-esp --version v1.16 --git-commit abc1234 --built-at 2026-10-22T08:00:00Z --artifacts-file fixtures/dup-kind.artifacts
+=== stderr ===
+error: artifacts line 3: stream 'jxd-r6-e1eth-test-selftest' already has kind 'loader' on line 2
+=== exit 2 ===
