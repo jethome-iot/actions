@@ -1,0 +1,16 @@
+=== exit: 0
+=== argv
+mktemp
+curl
+  [-s]
+  [-H]
+  [Authorization: Bearer test-token]
+  [-F]
+  [import_file=@<work>/tmp/mktemp-1]
+  [-F]
+  [commit="true"]
+  [https://fw.jethome.ru/api/import_hierarchy/]
+  @<work>/tmp/mktemp-1:
+    | [ { "is_active": true, "name": "JetHome", "platforms": [ { "firmware_types": [ { "final": false, "is_active": true, "name": "Armbian", "slug": "armbian", "subtypes": [ { "final": false, "is_active": true, "name": "Release", "slug": "release", "storage_policy": "Release (keep last 4)", "subtypes": [ { "final": false, "is_active": true, "name": "Debian 12 Bookworm", "slug": "bookworm", "subtypes": [ { "final": true, "is_active": true, "name": "Edge Kernel", "slug": "edge" } ] } ] } ] } ], "is_active": true, "name": "J100", "slug": "j100" } ], "slug": "jethome" } ]
+=== github_output
+=== github_env

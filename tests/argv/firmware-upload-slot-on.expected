@@ -1,0 +1,25 @@
+=== exit: 0
+=== argv
+curl
+  [-s]
+  [-H]
+  [Authorization: Bearer test-token]
+  [-F]
+  [vendor="JetHome"]
+  [-F]
+  [platform="j100"]
+  [-F]
+  [firmware_type="Armbian.release.bookworm.edge"]
+  [-F]
+  [version="25.11.1"]
+  [-F]
+  [release_date="2026-01-02T03:04:05+03:00"]
+  [-F]
+  [update_latest_ref=true]
+  [-F]
+  [force_overwrite=true]
+  [-F]
+  [supported_devices="D1,D1P"]
+  [https://fw.jethome.ru/api/create_firmware/]
+=== github_output
+=== github_env
