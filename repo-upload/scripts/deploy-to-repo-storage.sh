@@ -10,22 +10,31 @@ elif [ "${INPUT_BRANCH}" == "nightly" ]; then
 elif [ "${INPUT_BRANCH}" == "test" ]; then
   DEPLOYFOLDER=${INPUT_HOSTPATH}-test
 else
-  echo 'output=not_need' >> $GITHUB_OUTPUT
+  echo 'output=not_need' >> "${GITHUB_OUTPUT}"
   exit 0
 fi
-echo dist: $(echo ${INPUT_DISTRO} | sed 's/,/ /g')
-for dist in $(echo ${INPUT_DISTRO} | sed 's/,/ /g'); do
-  ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${KEY_ID} ${INPUT_USER}@${INPUT_HOSTNAME} "mkdir -p ${DEPLOYFOLDER}/${dist}"
-  files=$(echo "${INPUT_FILES}" | tr '\n' ' ')
+# distro — список через запятую или пробел.
+read -r -d '' -a DISTS <<<"${INPUT_DISTRO//,/ }" || true
+# files — шаблоны имён через перевод строки или пробел.
+read -r -d '' -a PATTERNS <<<"${INPUT_FILES}" || true
+echo "dist: ${DISTS[*]}"
+for dist in "${DISTS[@]}"; do
+  ssh -o StrictHostKeyChecking=no -i "${HOME}/.ssh/${KEY_ID}" "${INPUT_USER}@${INPUT_HOSTNAME}" "mkdir -p ${DEPLOYFOLDER}/${dist}"
   CURDIR=$(pwd)
   cd "${INPUT_PATH}"
-  echo filelist: $(ls ${files})
-  for file in $(ls ${files}); do
-    rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${KEY_ID}" -avr ${file} ${INPUT_USER}@${INPUT_HOSTNAME}:${DEPLOYFOLDER}/${dist}
+  # Совпадения всех шаблонов одним отсортированным списком, как их выдавал
+  # ls; шаблон без совпадений ничего не добавляет.
+  mapfile -t FILELIST < <(
+    for pattern in "${PATTERNS[@]}"; do
+      compgen -G "${pattern}" || true
+    done | sort
+  )
+  echo "filelist: ${FILELIST[*]}"
+  for file in "${FILELIST[@]}"; do
+    rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${KEY_ID}" -avr "${file}" "${INPUT_USER}@${INPUT_HOSTNAME}:${DEPLOYFOLDER}/${dist}"
   done
-  cd ${CURDIR}
+  cd "${CURDIR}"
 done
 
-echo 'output=ok' >> $GITHUB_OUTPUT
+echo 'output=ok' >> "${GITHUB_OUTPUT}"
 exit 0
-

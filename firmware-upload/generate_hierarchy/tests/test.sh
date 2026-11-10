@@ -11,13 +11,13 @@ check_main() {
     local FULLSLUG="$1"
     local OUTFILE="${SCRIPT_DIR}/$2"
 
-    local ARGS
-    ARGS=$(echo "${FULLSLUG}" | sed 's/\./ /g' | sed 's/\//-/g')
+    local -a ARGS
+    read -r -a ARGS <<<"$(echo "${FULLSLUG}" | sed 's/\./ /g' | sed 's/\//-/g')"
 
     local TMPFILE
     TMPFILE=$(mktemp)
     echo "${FULLSLUG}" >"${TMPFILE}"
-    python3 "${BASE_DIR}/main.py" ${ARGS} >>"${TMPFILE}"
+    python3 "${BASE_DIR}/main.py" "${ARGS[@]}" >>"${TMPFILE}"
 
     if [ -f "${OUTFILE}" ]; then
         if ! diff -u "${OUTFILE}" "${TMPFILE}"; then

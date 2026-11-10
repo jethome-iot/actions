@@ -7,8 +7,8 @@ set -eo pipefail
 temp=$(mktemp)
 
 if [ -z "${INPUT_OVERRIDE}" ]; then
-  VERMAJ="$(jq -r '.version' ${INPUT_FILE} | cut -d '.' -f 1)"
-  VERMIN="$(jq -r '.version' ${INPUT_FILE} | cut -d '.' -f 2)"
+  VERMAJ="$(jq -r '.version' "${INPUT_FILE}" | cut -d '.' -f 1)"
+  VERMIN="$(jq -r '.version' "${INPUT_FILE}" | cut -d '.' -f 2)"
   if [ "${INPUT_TYPE}" == "major" ]; then
     field=${VERMAJ}
   else
@@ -41,7 +41,10 @@ cat "${INPUT_FILE}" | jq ".version |= \"${VER}\"" > "${temp}"
 mv "${temp}" "${INPUT_FILE}"
 rm -f "${temp}"
 
-echo "Set version ${VER} cat file $(cat ${INPUT_FILE})"
-echo 'output=${VER}' >> $GITHUB_OUTPUT
+echo "Set version ${VER} cat file $(cat "${INPUT_FILE}")"
+# Одинарные кавычки — известный дефект: в output уходит литерал, а не
+# значение. Он заморожен эталоном и исправляется отдельным изменением.
+# shellcheck disable=SC2016
+echo 'output=${VER}' >> "${GITHUB_OUTPUT}"
 exit 0
 

@@ -5,30 +5,33 @@
 set -eo pipefail
 # Check date & version specified
 # Check date specified or use current date
-if [ -z ${INPUT_DATE} ] ; then
+# Значение из одних пробелов считается пустым, как и при прежней проверке
+# [ -z ${X} ] без кавычек.
+if [ -z "${INPUT_DATE//[[:space:]]/}" ] ; then
   DATE="$(date -Iseconds)"
 else
   DATE="${INPUT_DATE}"
 fi
 # Check version specified or use date as version
-if [ -z ${INPUT_VERSION} ] ; then
+if [ -z "${INPUT_VERSION//[[:space:]]/}" ] ; then
   VERSION="${DATE}"
 else
-  VERSION="${INPUT_VERSION}"
+  # Пробелы по краям срезаются, серии пробелов сжимаются до одного — как
+  # раньше при echo без кавычек.
+  read -r -d '' -a VERSION_WORDS <<<"${INPUT_VERSION}" || true
   # change all non-alpabet characters from VERSION to '-'
-  VERSION="$(echo ${VERSION} | sed 's/[^a-zA-Z0-9._-]/-/g')"
+  VERSION="$(echo "${VERSION_WORDS[*]}" | sed 's/[^a-zA-Z0-9._-]/-/g')"
 fi
 
 #          vendor.platform.project.channel.release.branch
 #default: 'JetHome.j100.Armbian.nightly.jammy.edge'
-read VENDOR SLUGWOVENDOR   <<<"$(echo ${INPUT_FULLSLUG} | sed 's/\./ /')"
-read PLATFORM SLUG <<<"$(echo ${SLUGWOVENDOR} | sed 's/\./ /')"
-echo "vendor=${VENDOR}" >> $GITHUB_OUTPUT
-echo "platform=${PLATFORM}" >> $GITHUB_OUTPUT
-echo "slug=${SLUG}" >> $GITHUB_OUTPUT
+read -r VENDOR SLUGWOVENDOR   <<<"$(echo "${INPUT_FULLSLUG}" | sed 's/\./ /')"
+read -r PLATFORM SLUG <<<"$(echo "${SLUGWOVENDOR}" | sed 's/\./ /')"
+echo "vendor=${VENDOR}" >> "${GITHUB_OUTPUT}"
+echo "platform=${PLATFORM}" >> "${GITHUB_OUTPUT}"
+echo "slug=${SLUG}" >> "${GITHUB_OUTPUT}"
 
-echo "date=${DATE}" >> $GITHUB_OUTPUT
-echo "version=${VERSION}" >> $GITHUB_OUTPUT
+echo "date=${DATE}" >> "${GITHUB_OUTPUT}"
+echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
 echo "checkvars ok"
-
 

@@ -6,7 +6,7 @@ set -eo pipefail
 # Имя RANDOM для идентификатора ключа не годится: в скрипте встроенная
 # переменная bash перекрывает экспортированную, и путь к ключу указал бы
 # на несуществующий файл. Справа — генератор bash, как и прежде.
-echo "KEY_ID=ID_$((RANDOM%1000000))" >> $GITHUB_ENV
-echo "HOME=${HOME}" >> $GITHUB_ENV
-mkdir -p ${HOME}/.ssh
+echo "KEY_ID=ID_$((RANDOM % 1000000))" >> "${GITHUB_ENV}"
+echo "HOME=${HOME}" >> "${GITHUB_ENV}"
+mkdir -p "${HOME}/.ssh"
 

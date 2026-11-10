@@ -24,27 +24,27 @@ DEPLOYFOLDER=${INPUT_HOSTPATH}/${INPUT_TARGET}
 # Examples:
 #   armbian -> linux-image.deb (no subpath)
 #   armbian-extra/noble-utils -> extra/noble-utils/base-files.deb (has subpath)
-for row in $(cat ${INPUT_JSON} | jq -r '.[] | @base64'); do
+for row in $(cat "${INPUT_JSON}" | jq -r '.[] | @base64'); do
   _jq() {
-    echo ${row} | base64 --decode | jq -r ${1}
+    echo "${row}" | base64 --decode | jq -r "${1}"
   }
   for file in $(_jq '.debs' | jq -r '.[] | @base64'); do
     _jqq() {
-      echo ${file} | base64 --decode | jq -r ${1}
+      echo "${file}" | base64 --decode | jq -r "${1}"
     }
     FF=$(_jqq '.relative_deb_path')
     if [ -f "output/${DEBSDIR}/${FF}" ]; then
       # Create target directory if path contains subdirectory
       SUBDIR=$(dirname "${FF}")
       if [[ "${SUBDIR}" != "." ]]; then
-        ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${KEY_ID} ${INPUT_USER}@${INPUT_HOSTNAME} "mkdir -p ${DEPLOYFOLDER}/${SUBDIR}"
+        ssh -o StrictHostKeyChecking=no -i "${HOME}/.ssh/${KEY_ID}" "${INPUT_USER}@${INPUT_HOSTNAME}" "mkdir -p ${DEPLOYFOLDER}/${SUBDIR}"
       fi
       # Upload file preserving relative path structure
-      rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${KEY_ID}" -avr output/${DEBSDIR}/${FF} ${INPUT_USER}@${INPUT_HOSTNAME}:${DEPLOYFOLDER}/${FF}
+      rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${KEY_ID}" -avr "output/${DEBSDIR}/${FF}" "${INPUT_USER}@${INPUT_HOSTNAME}:${DEPLOYFOLDER}/${FF}"
     fi
   done
 done
 
-echo 'output=ok' >> $GITHUB_OUTPUT
+echo 'output=ok' >> "${GITHUB_OUTPUT}"
 exit 0
 

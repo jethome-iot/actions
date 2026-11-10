@@ -7,42 +7,44 @@ set -eo pipefail
 #          vendor.platform.project.channel.release.branch
 #default: 'JetHome.j100.Armbian.nightly.jammy.edge'
 if [ ! -e "${INPUT_HASHPGP_FILE}" ] ; then
-  HASHPGP=$(sha256sum ${INPUT_FIRMWARE_FILE} | awk '{print $1}')
+  HASHPGP=$(sha256sum "${INPUT_FIRMWARE_FILE}" | awk '{print $1}')
   echo "Generate sha256 hash ${HASHPGP}"
 else
-  HASHPGP="$(cat ${INPUT_HASHPGP_FILE})"
+  HASHPGP="$(cat "${INPUT_HASHPGP_FILE}")"
   echo "Use provided hash ${HASHPGP}"
 fi
 TMPHASH=$(mktemp)
-echo "${HASHPGP}" >${TMPHASH}
+echo "${HASHPGP}" >"${TMPHASH}"
 for i in 1 2 3; do
   echo "Upload firmware_type=${INPUT_FULLSLUG} try $i"
   RESPONSE=$(curl --limit-rate 10M -s -H "Authorization: Bearer ${INPUT_FWUPLOAD}" \
-      -F 'vendor="'${CHECKVARS_VENDOR}'"' \
-      -F 'platform="'${CHECKVARS_PLATFORM}'"' \
-      -F 'firmware_type="'${CHECKVARS_SLUG}'"' \
-      -F 'version="'${CHECKVARS_VERSION}'"' \
-      -F 'image_type="'${INPUT_IMAGE_TYPE}'"' \
+      -F "vendor=\"${CHECKVARS_VENDOR}\"" \
+      -F "platform=\"${CHECKVARS_PLATFORM}\"" \
+      -F "firmware_type=\"${CHECKVARS_SLUG}\"" \
+      -F "version=\"${CHECKVARS_VERSION}\"" \
+      -F "image_type=\"${INPUT_IMAGE_TYPE}\"" \
       -F "hash_pgp=${HASHPGP}" \
       -F "firmware_file=@${INPUT_FIRMWARE_FILE}" \
-      -F 'force_overwrite="'${INPUT_FORCE_OVERWRITE}'"' \
+      -F "force_overwrite=\"${INPUT_FORCE_OVERWRITE}\"" \
       "${INPUT_URL}/api/upload_firmware/") || true
-  TESTERR="$(echo ${RESPONSE} | jq .success)" || true
+  TESTERR="$(echo "${RESPONSE}" | jq .success)" || true
   if [ "${TESTERR}" == "true" ]; then
     break
   fi
-  sleep $((i*10))
+  sleep $((i * 10))
 done
-rm -rf ${TMPHASH}
+rm -rf "${TMPHASH}"
 echo -n "Upload firmware ${INPUT_FIRMWARE_FILE}: "
-if [ "$(echo ${RESPONSE} | jq .success)" == "true" ] ; then
+if [ "$(echo "${RESPONSE}" | jq .success)" == "true" ] ; then
   echo "Success"
 else
   echo "Error"
-  echo ${RESPONSE}
+  echo "${RESPONSE}"
   exit 5
 fi
-echo 'hash<<EOF' >> $GITHUB_OUTPUT
-echo "${HASHPGP}" >> $GITHUB_OUTPUT
-echo 'EOF' >> $GITHUB_OUTPUT
+{
+  echo 'hash<<EOF'
+  echo "${HASHPGP}"
+  echo 'EOF'
+} >> "${GITHUB_OUTPUT}"
 

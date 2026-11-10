@@ -10,12 +10,15 @@ else
 fi
 CURDIR=$(pwd)
 cd "${INPUT_PATHOS}"
-VERSION=$(jq -r '.version' ${BRANCH}.json)
-VERSIONJH="jh.$(jq -r '.version' ${BRANCH}-jethome.json | cut -d '.' -f 3 | xargs -n 1 printf '%02d')"
+VERSION=$(jq -r '.version' "${BRANCH}.json")
+VERSIONJH="jh.$(jq -r '.version' "${BRANCH}-jethome.json" | cut -d '.' -f 3 | xargs -n 1 printf '%02d')"
 cd "${CURDIR}"
 cd "${INPUT_PATHARMBIAN}"
 echo "${VERSION}.${VERSIONJH}" > VERSION
 
-echo 'output=${VERSION}.${VERSIONJH}' >> $GITHUB_OUTPUT
+# Одинарные кавычки — известный дефект: в output уходит литерал, а не
+# значение. Он заморожен эталоном и исправляется отдельным изменением.
+# shellcheck disable=SC2016
+echo 'output=${VERSION}.${VERSIONJH}' >> "${GITHUB_OUTPUT}"
 exit 0
 
