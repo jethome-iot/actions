@@ -27,6 +27,8 @@ jobs:
             suite: firmware-upload/generate_hierarchy/tests/test.sh
           - action: tsa-publish
             suite: tsa-publish/tests/test.sh
+          - action: composite-actions
+            suite: tests/test_actions.sh
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
