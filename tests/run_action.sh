@@ -42,17 +42,9 @@ export GITHUB_ACTION_PATH="${REPO_DIR}/${ACTION_DIR}"
 export PATH="${TESTS_DIR}/stubs:${PATH}"
 
 SCRIPT="${REPO_DIR}/${ACTION_DIR}/scripts/${STEP_ID}.sh"
-if [ -f "${SCRIPT}" ]; then
-    # Скрипты уже вынесены — зовём настоящий код так же, как его зовёт
-    # action.yml: bash без опций, опции шелла задаёт сам скрипт.
-    bash "${SCRIPT}" >"${WORK}/stdout" 2>&1
-else
-    # Shell ещё внутри action.yml — достаём блок экстрактором и запускаем
-    # тем же вызовом, что раннер для shell: bash.
-    python3 "${TESTS_DIR}/lib/extract_run_block.py" \
-        "${REPO_DIR}/${ACTION_DIR}/action.yml" "${STEP_ID}" >"${WORK}/step.sh"
-    bash --noprofile --norc -eo pipefail "${WORK}/step.sh" >"${WORK}/stdout" 2>&1
-fi
+# Зовём скрипт так же, как его зовёт action.yml: bash без опций, опции
+# шелла задаёт сам скрипт.
+bash "${SCRIPT}" >"${WORK}/stdout" 2>&1
 RC=$?
 
 # Пути песочницы и репозитория попадают в argv (ключ ssh в HOME, файлы
