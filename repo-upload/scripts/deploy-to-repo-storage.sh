@@ -23,8 +23,12 @@ for dist in "${DISTS[@]}"; do
   CURDIR=$(pwd)
   cd "${INPUT_PATH}"
   # Совпадения всех шаблонов одним отсортированным списком, как их выдавал
-  # ls; шаблон без совпадений ничего не добавляет.
-  mapfile -t FILELIST < <(
+  # ls; шаблон без совпадений ничего не добавляет. Цикл read, а не mapfile:
+  # скрипт должен работать и под bash 3.2.
+  FILELIST=()
+  while IFS= read -r file; do
+    FILELIST+=("${file}")
+  done < <(
     for pattern in "${PATTERNS[@]}"; do
       compgen -G "${pattern}" || true
     done | sort
