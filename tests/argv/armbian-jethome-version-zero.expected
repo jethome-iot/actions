@@ -1,0 +1,10 @@
+=== exit: 0
+=== argv
+mktemp
+=== github_output
+output=${VER}
+=== github_env
+=== file: nightly-jethome.json
+{
+  "version": "1.0"
+}
