@@ -66,7 +66,7 @@ Run action argv tests (from anywhere):
 bash tests/test_actions.sh
 ```
 
-These run each composite action step from `<action>/scripts/` with stubbed `curl`, `ssh`, `rsync`, `sha256sum`, `date`, `mktemp` and `sleep` (`tests/stubs/`) and compare the captured argv, uploaded file contents, `GITHUB_OUTPUT`, `GITHUB_ENV` and listed result files against `tests/argv/<scenario>.expected`. Scenarios live in `tests/scenarios/<scenario>.env`. To regenerate a single golden: `UPDATE_GOLDEN=1 bash tests/run_action.sh tests/scenarios/<name>.env`.
+These run each composite action step from `<action>/scripts/` with stubbed `curl`, `ssh`, `rsync`, `sha256sum`, `date`, `mktemp` and `sleep` (`tests/stubs/`) and compare the captured argv, uploaded file contents, `GITHUB_OUTPUT`, `GITHUB_ENV` and listed result files against `tests/argv/<scenario>.expected`. Scenarios live in `tests/scenarios/<scenario>.env`. To regenerate a single golden: `UPDATE_GOLDEN=1 bash tests/run_action.sh tests/scenarios/<name>.env`. Where `/bin/bash` is a different major version than `bash` on `PATH` (system bash 3.2 on macOS), every scenario also runs under `/bin/bash`; step scripts must not use bash 4 features such as `mapfile`.
 
 ## Code Style
 

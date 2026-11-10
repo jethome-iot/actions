@@ -43,8 +43,9 @@ export PATH="${TESTS_DIR}/stubs:${PATH}"
 
 SCRIPT="${REPO_DIR}/${ACTION_DIR}/scripts/${STEP_ID}.sh"
 # Зовём скрипт так же, как его зовёт action.yml: bash без опций, опции
-# шелла задаёт сам скрипт.
-bash "${SCRIPT}" >"${WORK}/stdout" 2>&1
+# шелла задаёт сам скрипт. ACTION_BASH задаёт интерпретатор явно — так
+# сюита проверяет скрипты и под старым bash (см. test_actions.sh).
+"${ACTION_BASH:-bash}" "${SCRIPT}" >"${WORK}/stdout" 2>&1
 RC=$?
 
 # Пути песочницы и репозитория попадают в argv (ключ ssh в HOME, файлы
