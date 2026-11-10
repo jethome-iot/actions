@@ -1,0 +1,6 @@
+#!/bin/bash
+# shellcheck source=../lib/log_argv.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/log_argv.sh"
+log_argv sha256sum "$@"
+# Настоящий sha256sum печатает "<хеш>  <файл>", код разбирает это через awk.
+echo "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  $1"

@@ -1,0 +1,7 @@
+=== exit: 0
+=== argv
+=== github_output
+output=${VERSION}.${VERSIONJH}
+=== github_env
+=== file: build/VERSION
+25.11.1.jh.03

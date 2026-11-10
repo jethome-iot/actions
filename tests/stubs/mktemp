@@ -1,0 +1,12 @@
+#!/bin/bash
+# shellcheck source=../lib/log_argv.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/log_argv.sh"
+log_argv mktemp "$@"
+# Детерминированные имена: иначе путь временного файла течёт в argv curl.
+i=0
+[ -f "${MKTEMP_COUNTER}" ] && i=$(cat "${MKTEMP_COUNTER}")
+i=$((i + 1))
+echo "${i}" >"${MKTEMP_COUNTER}"
+path="${STUB_TMPDIR}/mktemp-${i}"
+: >"${path}"
+echo "${path}"

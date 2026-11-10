@@ -1,0 +1,14 @@
+#!/bin/bash
+# shellcheck source=../lib/log_argv.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/log_argv.sh"
+log_argv curl "$@"
+# CURL_FAIL_STATE хранит, сколько ещё вызовов должны вернуть неуспех.
+# Нужен для сценария с retry: состояние между запусками процесса — только через файл.
+n=0
+[ -f "${CURL_FAIL_STATE:-/dev/null}" ] && n=$(cat "${CURL_FAIL_STATE}")
+if [ "${n}" -gt 0 ]; then
+    echo $((n - 1)) >"${CURL_FAIL_STATE}"
+    printf '{"success": false, "error": "stub failure"}'
+    exit 0
+fi
+printf '{"success": true}'
