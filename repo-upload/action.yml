@@ -44,50 +44,31 @@ runs:
     - name: "Generate key id" # We need this in case we run multiple runners on one machine
       id: genkey
       shell: bash
-      run: |
-        echo "RANDOM=ID_$((RANDOM%1000000))" >> $GITHUB_ENV
-        echo "HOME=${HOME}" >> $GITHUB_ENV
-        mkdir -p ${HOME}/.ssh
+      run: bash "${GITHUB_ACTION_PATH}/scripts/genkey.sh"
 
     - name: Install SSH key for storage
       uses: shimataro/ssh-key-action@v2
       with:
         key: ${{ inputs.SSH_KEY }}
-        name: ${{ env.RANDOM }}
+        name: ${{ env.KEY_ID }}
         known_hosts: unnecessary
         if_key_exists: replace
         config: |
           Host bastion
             HostName repo.jethome.ru
             User repo
-            IdentityFile ${HOME}/.ssh/${{ env.RANDOM }}
+            IdentityFile ${HOME}/.ssh/${{ env.KEY_ID }}
 
     - name: Deploy to repo storage
       id: deploy-to-repo-storage
       shell: bash
-      run: |
-        if [ "${{ inputs.branch }}" == "stable" ]; then
-          DEPLOYFOLDER=${{ inputs.hostpath }}
-        elif [ "${{ inputs.branch }}" == "nightly" ]; then
-          DEPLOYFOLDER=${{ inputs.hostpath }}-beta
-        elif [ "${{ inputs.branch }}" == "test" ]; then
-          DEPLOYFOLDER=${{ inputs.hostpath }}-test
-        else
-          echo 'output=not_need' >> $GITHUB_OUTPUT
-          exit 0
-        fi
-        echo dist: $(echo ${{ inputs.distro }} | sed 's/,/ /g')
-        for dist in $(echo ${{ inputs.distro }} | sed 's/,/ /g'); do
-          ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }} ${{ inputs.user }}@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${dist}"
-          files=$(echo "${{ inputs.files }}" | tr '\n' ' ')
-          CURDIR=$(pwd)
-          cd "${{ inputs.path }}"
-          echo filelist: $(ls ${files})
-          for file in $(ls ${files}); do
-            rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr ${file} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${dist}
-          done
-          cd ${CURDIR}
-        done
-
-        echo 'output=ok' >> $GITHUB_OUTPUT
-        exit 0
+      env:
+        INPUT_BRANCH: ${{ inputs.branch }}
+        INPUT_DISTRO: ${{ inputs.distro }}
+        INPUT_FILES: ${{ inputs.files }}
+        INPUT_HOSTNAME: ${{ inputs.hostname }}
+        INPUT_HOSTPATH: ${{ inputs.hostpath }}
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_USER: ${{ inputs.user }}
+        KEY_ID: ${{ env.KEY_ID }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/deploy-to-repo-storage.sh"

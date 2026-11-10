@@ -42,69 +42,30 @@ runs:
     - name: "Generate key id" # We need this in case we run multiple runners on one machine
       id: genkey
       shell: bash
-      run: |
-        echo "RANDOM=ID_$((RANDOM%1000000))" >> $GITHUB_ENV
-        echo "HOME=${HOME}" >> $GITHUB_ENV
-        mkdir -p ${HOME}/.ssh
+      run: bash "${GITHUB_ACTION_PATH}/scripts/genkey.sh"
 
     - name: Install SSH key for storage
       uses: shimataro/ssh-key-action@v2
       with:
         key: ${{ inputs.SSH_KEY }}
-        name: ${{ env.RANDOM }}
+        name: ${{ env.KEY_ID }}
         known_hosts: unnecessary
         if_key_exists: replace
         config: |
           Host bastion
             HostName repo.jethome.ru
             User repo
-            IdentityFile ${HOME}/.ssh/${{ env.RANDOM }}
+            IdentityFile ${HOME}/.ssh/${{ env.KEY_ID }}
 
     - name: Deploy to repo storage
       id: deploy-to-repo-storage
       shell: bash
-      run: |
-        if [ "${{ inputs.nightly }}" == "yes" ]; then
-          DEBSDIR=debs-beta
-        else
-          DEBSDIR=debs
-        fi
-        #if [ "${{ inputs.stable }}" == "no" ]; then
-        #  DEPLOYFOLDER=${{ inputs.hostpath }}
-        #elif [ "${{ inputs.branch }}" == "yes" ]; then
-        #  DEPLOYFOLDER=${{ inputs.hostpath }}-beta
-        #elif [ "${{ inputs.branch }}" == "test" ]; then
-        #  DEPLOYFOLDER=${{ inputs.hostpath }}-test
-        #else
-        #  echo 'output=not_need' >> $GITHUB_OUTPUT
-        #  exit 0
-        #fi
-        DEPLOYFOLDER=${{ inputs.hostpath }}/${{ inputs.target }}
-
-        # Process all artifacts - relative_deb_path already contains correct subpath
-        # Examples:
-        #   armbian -> linux-image.deb (no subpath)
-        #   armbian-extra/noble-utils -> extra/noble-utils/base-files.deb (has subpath)
-        for row in $(cat ${{ inputs.json }} | jq -r '.[] | @base64'); do
-          _jq() {
-            echo ${row} | base64 --decode | jq -r ${1}
-          }
-          for file in $(_jq '.debs' | jq -r '.[] | @base64'); do
-            _jqq() {
-              echo ${file} | base64 --decode | jq -r ${1}
-            }
-            FF=$(_jqq '.relative_deb_path')
-            if [ -f "output/${DEBSDIR}/${FF}" ]; then
-              # Create target directory if path contains subdirectory
-              SUBDIR=$(dirname "${FF}")
-              if [[ "${SUBDIR}" != "." ]]; then
-                ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }} ${{ inputs.user }}@${{ inputs.hostname }} "mkdir -p ${DEPLOYFOLDER}/${SUBDIR}"
-              fi
-              # Upload file preserving relative path structure
-              rsync -e "ssh -o StrictHostKeyChecking=no -i ${HOME}/.ssh/${{ env.RANDOM }}" -avr output/${DEBSDIR}/${FF} ${{ inputs.user }}@${{ inputs.hostname }}:${DEPLOYFOLDER}/${FF}
-            fi
-          done
-        done
-
-        echo 'output=ok' >> $GITHUB_OUTPUT
-        exit 0
+      env:
+        INPUT_HOSTNAME: ${{ inputs.hostname }}
+        INPUT_HOSTPATH: ${{ inputs.hostpath }}
+        INPUT_JSON: ${{ inputs.json }}
+        INPUT_NIGHTLY: ${{ inputs.nightly }}
+        INPUT_TARGET: ${{ inputs.target }}
+        INPUT_USER: ${{ inputs.user }}
+        KEY_ID: ${{ env.KEY_ID }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/deploy-to-repo-storage.sh"
