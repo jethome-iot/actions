@@ -56,147 +56,52 @@ runs:
     - name: Check data & version
       id: checkvars
       shell: bash
-      run: |
-        # Check date & version specified
-        # Check date specified or use current date
-        if [ -z ${{inputs.date}} ] ; then
-          DATE="$(date -Iseconds)"
-        else
-          DATE="${{inputs.date}}"
-        fi
-        # Check version specified or use date as version
-        if [ -z ${{inputs.version}} ] ; then
-          VERSION="${DATE}"
-        else
-          VERSION="${{inputs.version}}"
-          # change all non-alpabet characters from VERSION to '-'
-          VERSION="$(echo ${VERSION} | sed 's/[^a-zA-Z0-9._-]/-/g')"
-        fi
-
-        #          vendor.platform.project.channel.release.branch
-        #default: 'JetHome.j100.Armbian.nightly.jammy.edge'
-        read VENDOR SLUGWOVENDOR   <<<"$(echo ${{inputs.fullslug}} | sed 's/\./ /')"
-        read PLATFORM SLUG <<<"$(echo ${SLUGWOVENDOR} | sed 's/\./ /')"
-        echo "vendor=${VENDOR}" >> $GITHUB_OUTPUT
-        echo "platform=${PLATFORM}" >> $GITHUB_OUTPUT
-        echo "slug=${SLUG}" >> $GITHUB_OUTPUT
-
-        echo "date=${DATE}" >> $GITHUB_OUTPUT
-        echo "version=${VERSION}" >> $GITHUB_OUTPUT
-        echo "checkvars ok"
+      env:
+        INPUT_DATE: ${{ inputs.date }}
+        INPUT_FULLSLUG: ${{ inputs.fullslug }}
+        INPUT_VERSION: ${{ inputs.version }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/checkvars.sh"
 
 
     - name: Apply fw template
       id: apply-fw-template
       shell: bash
-      run: |
-        # Apply fw template
-        TMPJSON=$(mktemp)
-        cd "${{ github.action_path }}/generate_hierarchy"
-        ARGS=$(echo ${{inputs.fullslug}}| sed 's/\./ /g'| sed 's/\//-/g')
-        echo "=== ARGS: ${ARGS} ==="
-        python3 main.py ${ARGS}
-        HIERARCHY=$(python3 main.py ${ARGS})
-        echo "hier generated"
-
-        echo "|+++++++++++++++++++++++++++++++++++++++++|"
-        echo ${HIERARCHY}
-        echo "|+++++++++++++++++++++++++++++++++++++++++|"
-        echo ${HIERARCHY} > ${TMPJSON}
-        echo Add category to fw
-        RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
-            -F "import_file=@${TMPJSON}" \
-            -F 'commit="true"' \
-            "${{inputs.url}}/api/import_hierarchy/")
-        rm -rf ${TMPJSON}
-        if [ "$(echo ${RESPONSE} | jq .success)" == "true" ]; then
-          echo "Category add to storage: Success"
-        else
-          echo "Category add to storage: Error"
-          echo ${RESPONSE}
-          exit 1
-        fi
+      env:
+        INPUT_FULLSLUG: ${{ inputs.fullslug }}
+        INPUT_FWUPLOAD: ${{ inputs.FWUPLOAD }}
+        INPUT_URL: ${{ inputs.url }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/apply-fw-template.sh"
 
     - name: Create firmware slot
       id: add-fw-slot
       shell: bash
-      run: |
-        if [ -z ${{inputs.supported_devices}} ] ; then
-          SUPPORTED_DEVICES=""
-        else
-          SUPPORTED_DEVICES="-F supported_devices=\"${{inputs.supported_devices}}\" "
-        fi
-        echo "Create firmware slot ${{steps.checkvars.outputs.vendor}}.${{steps.checkvars.outputs.platform}}.${{steps.checkvars.outputs.slug}} ${SUPPORTED_DEVICES}"
-        if [ -z ${{inputs.changelog_file}} ] ; then
-          CHANGELOG_FILE=""
-        else
-          CHANGELOG_FILE="-F changelog_file=@${{inputs.changelog_file}} "
-        fi
-
-        if [ "${{inputs.generatefirmwareslot}}" == "true" ]; then
-          RESPONSE=$(curl -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
-              -F 'vendor="'${{steps.checkvars.outputs.vendor}}'"' \
-              -F 'platform="'${{steps.checkvars.outputs.platform}}'"' \
-              -F 'firmware_type="'${{steps.checkvars.outputs.slug}}'"' \
-              -F 'version="'${{steps.checkvars.outputs.version}}'"' \
-              -F 'release_date="'${{steps.checkvars.outputs.date}}'"' \
-              -F "update_latest_ref=${{inputs.update_latest}}" \
-              -F "force_overwrite=true" \
-              ${SUPPORTED_DEVICES} \
-              ${CHANGELOG_FILE} \
-              "${{inputs.url}}/api/create_firmware/")
-          echo -n "Create firmware slot: "
-          if [ "$(echo ${RESPONSE} | jq .success)" == "true" ]; then
-            echo "Success"
-          else
-            echo "Error"
-            echo ${RESPONSE}
-          fi
-        fi
+      env:
+        CHECKVARS_DATE: ${{ steps.checkvars.outputs.date }}
+        CHECKVARS_PLATFORM: ${{ steps.checkvars.outputs.platform }}
+        CHECKVARS_SLUG: ${{ steps.checkvars.outputs.slug }}
+        CHECKVARS_VENDOR: ${{ steps.checkvars.outputs.vendor }}
+        CHECKVARS_VERSION: ${{ steps.checkvars.outputs.version }}
+        INPUT_CHANGELOG_FILE: ${{ inputs.changelog_file }}
+        INPUT_FWUPLOAD: ${{ inputs.FWUPLOAD }}
+        INPUT_GENERATEFIRMWARESLOT: ${{ inputs.generatefirmwareslot }}
+        INPUT_SUPPORTED_DEVICES: ${{ inputs.supported_devices }}
+        INPUT_UPDATE_LATEST: ${{ inputs.update_latest }}
+        INPUT_URL: ${{ inputs.url }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/add-fw-slot.sh"
 
     - name: Deploy to fw storage
       id: deploy-to-fw-storage
       shell: bash
-      run: |
-        # Deploy to fw storage
-        #          vendor.platform.project.channel.release.branch
-        #default: 'JetHome.j100.Armbian.nightly.jammy.edge'
-        if [ ! -e "${{inputs.hashpgp_file}}" ] ; then
-          HASHPGP=$(sha256sum ${{inputs.firmware_file}} | awk '{print $1}')
-          echo "Generate sha256 hash ${HASHPGP}"
-        else
-          HASHPGP="$(cat ${{inputs.hashpgp_file}})"
-          echo "Use provided hash ${HASHPGP}"
-        fi
-        TMPHASH=$(mktemp)
-        echo "${HASHPGP}" >${TMPHASH}
-        for i in 1 2 3; do
-          echo "Upload firmware_type=${{inputs.fullslug}} try $i"
-          RESPONSE=$(curl --limit-rate 10M -s -H "Authorization: Bearer ${{ inputs.FWUPLOAD }}" \
-              -F 'vendor="'${{steps.checkvars.outputs.vendor}}'"' \
-              -F 'platform="'${{steps.checkvars.outputs.platform}}'"' \
-              -F 'firmware_type="'${{steps.checkvars.outputs.slug}}'"' \
-              -F 'version="'${{steps.checkvars.outputs.version}}'"' \
-              -F 'image_type="'${{inputs.image_type}}'"' \
-              -F "hash_pgp=${HASHPGP}" \
-              -F "firmware_file=@${{inputs.firmware_file}}" \
-              -F 'force_overwrite="'${{inputs.force_overwrite}}'"' \
-              "${{inputs.url}}/api/upload_firmware/") || true
-          TESTERR="$(echo ${RESPONSE} | jq .success)" || true
-          if [ "${TESTERR}" == "true" ]; then
-            break
-          fi
-          sleep $((i*10))
-        done
-        rm -rf ${TMPHASH}
-        echo -n "Upload firmware ${{inputs.firmware_file}}: "
-        if [ "$(echo ${RESPONSE} | jq .success)" == "true" ] ; then
-          echo "Success"
-        else
-          echo "Error"
-          echo ${RESPONSE}
-          exit 5
-        fi
-        echo 'hash<<EOF' >> $GITHUB_OUTPUT
-        echo "${HASHPGP}" >> $GITHUB_OUTPUT
-        echo 'EOF' >> $GITHUB_OUTPUT
+      env:
+        CHECKVARS_PLATFORM: ${{ steps.checkvars.outputs.platform }}
+        CHECKVARS_SLUG: ${{ steps.checkvars.outputs.slug }}
+        CHECKVARS_VENDOR: ${{ steps.checkvars.outputs.vendor }}
+        CHECKVARS_VERSION: ${{ steps.checkvars.outputs.version }}
+        INPUT_FIRMWARE_FILE: ${{ inputs.firmware_file }}
+        INPUT_FORCE_OVERWRITE: ${{ inputs.force_overwrite }}
+        INPUT_FULLSLUG: ${{ inputs.fullslug }}
+        INPUT_FWUPLOAD: ${{ inputs.FWUPLOAD }}
+        INPUT_HASHPGP_FILE: ${{ inputs.hashpgp_file }}
+        INPUT_IMAGE_TYPE: ${{ inputs.image_type }}
+        INPUT_URL: ${{ inputs.url }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/deploy-to-fw-storage.sh"

@@ -1,0 +1,35 @@
+=== exit: 0
+=== argv
+sha256sum
+  [image.img]
+mktemp
+curl
+  [--limit-rate]
+  [10M]
+  [-s]
+  [-H]
+  [Authorization: Bearer test-token]
+  [-F]
+  [vendor="JetHome"]
+  [-F]
+  [platform="j100"]
+  [-F]
+  [firmware_type="Armbian.release.bookworm.edge"]
+  [-F]
+  [version="25.11.1"]
+  [-F]
+  [image_type="sdcard"]
+  [-F]
+  [hash_pgp=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855]
+  [-F]
+  [firmware_file=@image.img]
+  [-F]
+  [force_overwrite="true"]
+  [https://fw.jethome.ru/api/upload_firmware/]
+  @image.img:
+    | firmware bytes
+=== github_output
+hash<<EOF
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+EOF
+=== github_env

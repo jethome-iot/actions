@@ -1,0 +1,24 @@
+=== exit: 0
+=== argv
+ssh
+  [-o]
+  [StrictHostKeyChecking=no]
+  [-i]
+  [<work>/sandbox/.ssh/ID_424242]
+  [repo@repo.jethome.ru]
+  [mkdir -p /home/repo/armbian-beta/bookworm]
+rsync
+  [-e]
+  [ssh -o StrictHostKeyChecking=no -i <work>/sandbox/.ssh/ID_424242]
+  [-avr]
+  [linux-headers-1.0.deb]
+  [repo@repo.jethome.ru:/home/repo/armbian-beta/bookworm]
+rsync
+  [-e]
+  [ssh -o StrictHostKeyChecking=no -i <work>/sandbox/.ssh/ID_424242]
+  [-avr]
+  [linux-image-1.0.deb]
+  [repo@repo.jethome.ru:/home/repo/armbian-beta/bookworm]
+=== github_output
+output=ok
+=== github_env

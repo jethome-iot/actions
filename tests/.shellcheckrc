@@ -1,0 +1,4 @@
+# Стабы подключают tests/lib/log_argv.sh: shellcheck должен его прочитать,
+# а путь в директиве source= считается от каталога самого скрипта.
+external-sources=true
+source-path=SCRIPTDIR

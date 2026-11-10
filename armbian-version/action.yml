@@ -25,19 +25,8 @@ runs:
     - name: "Copy version"
       id: copyversion
       shell: bash
-      run: |
-        if [ "${{ inputs.beta }}" == "yes" ]; then
-          BRANCH=nightly
-        else
-          BRANCH=stable
-        fi
-        CURDIR=$(pwd)
-        cd "${{ inputs.pathos }}"
-        VERSION=$(jq -r '.version' ${BRANCH}.json)
-        VERSIONJH="jh.$(jq -r '.version' ${BRANCH}-jethome.json | cut -d '.' -f 3 | xargs -n 1 printf '%02d')"
-        cd "${CURDIR}"
-        cd "${{ inputs.patharmbian }}"
-        echo "${VERSION}.${VERSIONJH}" > VERSION
-
-        echo 'output=${VERSION}.${VERSIONJH}' >> $GITHUB_OUTPUT
-        exit 0
+      env:
+        INPUT_BETA: ${{ inputs.beta }}
+        INPUT_PATHARMBIAN: ${{ inputs.patharmbian }}
+        INPUT_PATHOS: ${{ inputs.pathos }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/copyversion.sh"

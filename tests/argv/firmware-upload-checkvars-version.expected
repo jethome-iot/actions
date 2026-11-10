@@ -1,0 +1,9 @@
+=== exit: 0
+=== argv
+=== github_output
+vendor=JetHome
+platform=j100
+slug=Armbian.release.bookworm.edge
+date=2026-01-02T03:04:05+03:00
+version=25.11.1-beta-build
+=== github_env

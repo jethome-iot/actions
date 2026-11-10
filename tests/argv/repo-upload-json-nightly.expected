@@ -1,0 +1,24 @@
+=== exit: 0
+=== argv
+rsync
+  [-e]
+  [ssh -o StrictHostKeyChecking=no -i <work>/sandbox/.ssh/ID_424242]
+  [-avr]
+  [output/debs-beta/linux-image.deb]
+  [repo@repo.jethome.ru:/home/repo/armbian-test/linux-image.deb]
+ssh
+  [-o]
+  [StrictHostKeyChecking=no]
+  [-i]
+  [<work>/sandbox/.ssh/ID_424242]
+  [repo@repo.jethome.ru]
+  [mkdir -p /home/repo/armbian-test/extra/noble-utils]
+rsync
+  [-e]
+  [ssh -o StrictHostKeyChecking=no -i <work>/sandbox/.ssh/ID_424242]
+  [-avr]
+  [output/debs-beta/extra/noble-utils/base-files.deb]
+  [repo@repo.jethome.ru:/home/repo/armbian-test/extra/noble-utils/base-files.deb]
+=== github_output
+output=ok
+=== github_env

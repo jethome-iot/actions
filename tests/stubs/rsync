@@ -1,0 +1,4 @@
+#!/bin/bash
+# shellcheck source=../lib/log_argv.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/log_argv.sh"
+log_argv rsync "$@"

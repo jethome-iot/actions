@@ -1,0 +1,11 @@
+=== exit: 1
+=== argv
+ssh
+  [-o]
+  [StrictHostKeyChecking=no]
+  [-i]
+  [<work>/sandbox/.ssh/ID_424242]
+  [repo@repo.jethome.ru]
+  [mkdir -p /home/repo/armbian-test/bookworm]
+=== github_output
+=== github_env
